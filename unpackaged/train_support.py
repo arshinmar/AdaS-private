@@ -12,7 +12,6 @@ from test import test_main
 from optim.sls import SLS
 from optim.sps import SPS
 
-
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
