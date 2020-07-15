@@ -37,6 +37,8 @@ def test_main(test_loader, epoch: int, device) -> Tuple[float, float]:
             'net': GLOBALS.NET.state_dict(),
             'acc': acc,
             'epoch': epoch + 1,
+            'optimizer':GLOBALS.OPTIMIZER.state_dict(),
+            'train_loss' : GLOBALS.TRAIN_LOSS
         }
         if GLOBALS.ADAS is not None:
             state['historical_io_metrics'] = GLOBALS.METRICS.historical_metrics

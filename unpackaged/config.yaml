@@ -1,13 +1,13 @@
 ###### Application Specific ######
 dataset: 'CIFAR10' # options: CIFAR100, CIFAR10, ImageNet
-network: 'SENet18' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
+network: 'TestNetwork' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
 optim_method: 'SGD' # options: SGD, AdaM, AdaGrad, RMSProp, AdaDelta
 lr_scheduler: 'StepLR' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRestarts, OneCycleLR
 
 
 ###### Suggested Tune ######
-n_trials: 5
-beta: 0.975
+n_trials: 1
+beta: 0.7
 init_lr: 0.1
 
 

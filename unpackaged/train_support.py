@@ -29,14 +29,22 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     xlsx_path = str(output_path / xlsx_name)
+
+    #Load saved state
+    if GLOBALS.FIRST_RUN != True:
+        print('Loading saved state')
+        checkpoint = torch.load(str(GLOBALS.CHECKPOINT_PATH / 'ckpt.pth'))
+        GLOBALS.NET.load_state_dict(checkpoint['net'])
+        GLOBALS.OPTIMIZER.load_state_dict(checkpoint['optimizer'])
+
     for epoch in epochs:
         start_time = time.time()
         # print(f"AdaS: Epoch {epoch}/{epochs[-1]} Started.")
         train_loss, train_accuracy, test_loss, test_accuracy = \
-            epoch_iteration(trial,
-                            train_loader, test_loader,
-                            epoch, device, optimizer, scheduler)
+            epoch_iteration(trial,train_loader, test_loader,epoch, device, optimizer if GLOBALS.FIRST_RUN == True else GLOBALS.OPTMIZER, scheduler)
+
         end_time = time.time()
+
         if GLOBALS.CONFIG['lr_scheduler'] == 'StepLR':
             scheduler.step()
         total_time = time.time()
@@ -55,21 +63,22 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         df = pd.DataFrame(data=GLOBALS.PERFORMANCE_STATISTICS)
 
         df.to_excel(xlsx_path)
+        '''
+        No early stopping used
         if GLOBALS.EARLY_STOP(train_loss):
             print("AdaS: Early stop activated.")
             break
-
+        '''
 
 #@Profiler
 def epoch_iteration(trial, train_loader, test_loader, epoch: int,
-                    device, optimizer, scheduler) -> Tuple[float, float]:
+                    device, optimizer,scheduler) -> Tuple[float, float]:
     # logging.info(f"Adas: Train: Epoch: {epoch}")
     # global net, performance_statistics, metrics, adas, config
     GLOBALS.NET.train()
     train_loss = 0
     correct = 0
     total = 0
-
     """train CNN architecture"""
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         inputs, targets = inputs.to(device), targets.to(device)
@@ -103,8 +112,15 @@ def epoch_iteration(trial, train_loader, test_loader, epoch: int,
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
+
+        GLOBALS.TRAIN_LOSS = train_loss
+        GLOBALS.TRAIN_CORRECT = correct
+        GLOBALS.TRAIN_TOTAL = total
+
         if GLOBALS.CONFIG['lr_scheduler'] == 'OneCycleLR':
             scheduler.step()
+        #Update optimizer
+        GLOBALS.OPTIMIZER = optimizer
 
         # progress_bar(batch_idx, len(train_loader),
         #              'Loss: %.3f | Acc: %.3f%% (%d/%d)'
@@ -150,5 +166,6 @@ def epoch_iteration(trial, train_loader, test_loader, epoch: int,
             GLOBALS.PERFORMANCE_STATISTICS[f'learning_rate_epoch_{epoch}'] = \
                 optimizer.param_groups[0]['lr']
     test_loss, test_accuracy = test_main(test_loader, epoch, device)
+
     return (train_loss / (batch_idx + 1), 100. * correct / total,
             test_loss, test_accuracy)

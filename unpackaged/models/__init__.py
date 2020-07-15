@@ -39,7 +39,7 @@ from models.mobilenet import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.efficientnet import EfficientNetB0
 from models.SqueezeNet import SqueezeNet
-
+from models.own_network import TestNetwork
 
 def get_net(network: str, num_classes) -> torch.nn.Module:
     return VGG('VGG16', num_classes=num_classes) if network == 'VGG16' else \
@@ -56,4 +56,5 @@ def get_net(network: str, num_classes) -> torch.nn.Module:
         ShuffleNetV2(1, num_classes=num_classes) if network == 'ShuffleNetV2' else \
         SqueezeNet(num_classes=num_classes) if network == 'SqueezeNet' else \
         EfficientNetB0(
-            num_classes=num_classes) if network == 'EfficientNetB0' else None
+            num_classes=num_classes) if network == 'EfficientNetB0' else \
+        TestNetwork(num_classes=num_classes) if network == 'TestNetwork' else None
