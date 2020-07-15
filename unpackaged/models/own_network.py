@@ -88,7 +88,7 @@ class Bottleneck(nn.Module):
 
 
 class Network(nn.Module):
-    def __init__(self, block, num_blocks, num_classes=10):
+    def __init__(self, block, num_blocks, num_classes=10, new_output_sizes=None):
         super(Network, self).__init__()
 
         #######################  O% ########################
@@ -107,8 +107,8 @@ class Network(nn.Module):
         ####################### OUR OWN #######################
         self.index=[64, 64, 64, 64, 64]
 
-
-
+        if new_output_sizes!=None:
+            self.index=new_output_sizes
 
         self.in_planes = self.index[0]
         self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=3,
@@ -141,8 +141,11 @@ class Network(nn.Module):
         out = self.linear(out)
         return out
 
-def TestNetwork(num_classes: int = 10):
-    return Network(BasicBlock, [3, 3, 3, 3, 3], num_classes=num_classes)
+def TestNetwork(num_classes: int = 10, new_output_sizes=None):
+    if new_output_sizes==None:
+        return Network(BasicBlock, [3, 3, 3, 3, 3], num_classes=num_classes)
+    else:
+        return Network(BasicBlock, [3, 3, 3, 3, 3], num_classes=num_classes,new_output_sizes=new_output_sizes)
 
 
 def test():
@@ -150,25 +153,6 @@ def test():
     ##print(net)
     x = torch.randn(1, 3, 32, 32)
     y = net(x)
-
-    # Print model's state_dict
-    counter=0
-    print("Model's state_dict:")
-    for param_tensor in net.state_dict():
-        print(param_tensor, "\t", net.state_dict()[param_tensor].size())
-        if counter==0:
-            print(net.state_dict()[param_tensor][0][0][0][0])
-            net.state_dict()[param_tensor][0][0][0][0]=1
-            print(net.state_dict()[param_tensor][0][0][0][0])
-            counter+=1
-            break
-
-    #g=make_dot(y)
-    #g.view()
-    #print('true')
-    #print(y.size())
-    pytorch_total_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
-    #Baseline: 21282122, 20%: 14112820, 40%: 8413430, 60%: 4270146, 80%: 1507574, 100%: 199714.
-    #print(pytorch_total_params)
+    #print(y.shape)
 
 #test()
