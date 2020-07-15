@@ -106,6 +106,7 @@ class Network(nn.Module):
 
         ####################### OUR OWN #######################
         self.index=[64, 64, 64, 64, 64]
+        #self.index=[128,256,512,1024,2048]
 
         if new_output_sizes!=None:
             self.index=new_output_sizes
@@ -154,5 +155,10 @@ def test():
     x = torch.randn(1, 3, 32, 32)
     y = net(x)
     #print(y.shape)
+    for param_tensor in net.state_dict():
+        if param_tensor.find('conv')==-1:
+            continue
+        print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+
 
 #test()

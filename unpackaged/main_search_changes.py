@@ -139,14 +139,21 @@ def prototype(net_state_dict,new_output_sizes):
         return goal
 
     '''Concatenates previous_weights with that new random_kernel'''
-    def adjust_weights(prev_weight, old_out_channels, out_channels, in_channels, width, height):
-        difference=out_channels-old_out_channels
+    def adjust_weights(prev_weight, old_out_channels, old_in_channels, out_channels, in_channels, width, height):
+        output_difference=out_channels-old_out_channels
+        input_difference=in_channels-old_in_channels
         print(prev_weight.shape, 'PREV WEIGHT SHAPE in ADJUST WEIGHTS')
-        goal=create_weights(difference,in_channels,width,height)
-        print(goal.shape,'RANDOM KERNEL SHAPE in ADJUST WEIGHTS')
-        final=torch.cat((prev_weight,goal),0)
-        print(final.shape,'FINAL ADJUSTED SHAPE in ADJUST WEIGHTS')
-        return final
+
+        goal=create_weights(output_difference,old_in_channels,width,height)
+        print(goal.shape, 'RANDOM KERNEL FROM OUTPUT DIFFERENCE')
+        goal2=create_weights(out_channels,input_difference,width,height)
+        print(goal2.shape, 'RANDOM KERNEL FROM INPUT DIFFERENCE')
+
+        output_final=torch.cat((prev_weight,goal),0)
+        print(output_final.shape, 'ASODNASDIJADSOIJSADOIJSADOIASDJOI')
+        input_final=torch.cat((output_final,goal2),1)
+        print(input_final.shape,'FINAL ADJUSTED w')
+        return input_final
 
     '''Initialise new network with CORRECT OUTPUT SIZES'''
     model=TestNetwork(new_output_sizes=new_output_sizes)
@@ -177,6 +184,7 @@ def prototype(net_state_dict,new_output_sizes):
         new_output_channel_size=new_weights.shape[0]
 
         new_input_channel_size=new_weights.shape[1]
+        old_input_channel_size=weights.shape[1]
 
         width=new_weights.shape[2]
         height=new_weights.shape[3]
@@ -216,7 +224,7 @@ def prototype(net_state_dict,new_output_sizes):
             break
 
         elif old_output_channel_size<=new_output_channel_size:
-            final=adjust_weights(weights,old_output_channel_size,new_output_channel_size,new_input_channel_size,width,height)
+            final=adjust_weights(weights,old_output_channel_size,old_input_channel_size,new_output_channel_size,new_input_channel_size,width,height)
 
         '''LOAD NEW KERNEL IN!'''
         new_state_dict = OrderedDict({str(param_tensor): final})
@@ -229,7 +237,7 @@ def prototype(net_state_dict,new_output_sizes):
 
 net = TestNetwork()
 
-x=torch.randn(1,32,32)
+x=torch.randn(1,3,32,32)
 model=prototype(net.state_dict(),[128,128,128,128,128])
 y=model(x)
 print(y.shape)
