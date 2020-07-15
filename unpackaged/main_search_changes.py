@@ -40,11 +40,13 @@ def test():
     set_threshold = False
     set_threshold_list = []
     historical_rate_of_change = list()
-    ##############################
+    ##############################GLOBAL VARIABLES#####################
+    #CONFIG=NONE
+
+
+
     # while lr_idx < len(learning_rates):
     cur_rank = 0.0
-    auto_lr_path = output_path / 'auto-lr'
-    auto_lr_path.mkdir(exist_ok=True)
     while True:
         if lr_idx == len(learning_rates) and not set_threshold:
             min_lr = learning_rates[-2]
@@ -68,7 +70,7 @@ def test():
             break
         # Data
         # logging.info("Adas: Preparing Data")
-        GLOBALS.CONFIG['init_lr'] = learning_rates[lr_idx]
+        GLOBALS.CONFIG['init_lr'] = 0.1# learning_rates[lr_idx]
         print(f"Using LR: {GLOBALS.CONFIG['init_lr']}")
         train_loader, test_loader = get_data(
             root=data_path,
