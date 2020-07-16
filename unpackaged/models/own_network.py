@@ -106,7 +106,6 @@ class Network(nn.Module):
 
         ####################### OUR OWN #######################
         self.index=[64, 64, 64, 64, 64]
-        #self.index=[128,256,512,1024,2048]
 
         if new_output_sizes!=None:
             self.index=new_output_sizes
