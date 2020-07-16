@@ -40,7 +40,6 @@ from models.mobilenetv2 import MobileNetV2
 from models.efficientnet import EfficientNetB0
 from models.SqueezeNet import SqueezeNet
 
-
 def get_net(network: str, num_classes) -> torch.nn.Module:
     return VGG('VGG16', num_classes=num_classes) if network == 'VGG16' else \
         ResNet34(num_classes=num_classes) if network == 'ResNet34' else \
