@@ -12,6 +12,39 @@ from test import test_main
 from optim.sls import SLS
 from optim.sps import SPS
 
+def get_ranks(max = False):
+    '''
+    - Read from .adas-output excel file
+    - Get Final epoch ranks
+    OR - get max output rank for each layer
+    '''
+    sheet = pd.read_excel(GLOBALS.EXCEL_PATH,index_col=0)
+
+    out_rank_col = [col for col in sheet if col.startswith('out_rank')]
+    out_ranks = sheet[out_rank_col]
+    #print('out ranks:')
+    #print(out_ranks)
+    if max == False:
+        last_rank_col = out_ranks.iloc[:,-1]
+
+        superblock1 = last_rank_col.iloc[range(0,7)]
+        superblock2 = last_rank_col.iloc[range(8,14)]
+        superblock3 = last_rank_col.iloc[range(15,21)]
+        superblock4 = last_rank_col.iloc[range(22,28)]
+        superblock5 = last_rank_col.iloc[range(29,35)]
+    else:
+        #Gets max out_rank across each row
+        max_ranks = out_ranks.max(axis=1)
+        #Gets the rows of each superblock
+        superblock1 = max_ranks.iloc[range(0,7)]
+        superblock2 = max_ranks.iloc[range(8,14)]
+        superblock3 = max_ranks.iloc[range(15,21)]
+        superblock4 = max_ranks.iloc[range(22,28)]
+        superblock5 = max_ranks.iloc[range(29,35)]
+
+
+    return [superblock1.mean(),superblock2.mean(),superblock3.mean(),superblock4.mean(),superblock5.mean()]
+
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
@@ -29,7 +62,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     xlsx_path = str(output_path / xlsx_name)
-
+    GLOBALS.EXCEL_PATH = xlsx_path
     #Load saved state
     if GLOBALS.FIRST_RUN != True:
         print('Loading saved state')

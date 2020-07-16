@@ -10,7 +10,7 @@ import numpy as np
 import torch
 import yaml
 
-from train_support import run_epochs
+from train_support import run_epochs, get_ranks
 from optim import get_optimizer_scheduler
 
 from utils import parse_config
@@ -161,25 +161,9 @@ if __name__ == '__main__':
     epochs = range(0, 3)
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
-    cnt = 0
-    for param in GLOBALS.NET.parameters():
-        print(param)
-        cnt += 1
-        if cnt == 6:
-            break
-
-    print('Finished first training, run_epochs function complete')
-
-    epochs = range(0, 3)
-    run_epochs(0, epochs, train_loader, test_loader,
-                           device, optimizer, scheduler, output_path)
-    print('~~~~~final~~~~~')
-    cnt = 0
-    for param in GLOBALS.NET.parameters():
-        print(param)
-        cnt += 1
-        if cnt == 6:
-            break
+    st = get_ranks(True)
+    print('Averaged Ranks')
+    print(st)
 
 
 
