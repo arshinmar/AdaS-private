@@ -1,19 +1,3 @@
-'''for j in i:
-    print(j.shape, 'J')
-    initial_L1_values+=[(initial_L1_norm(j),initial_counter)]
-    initial_counter+=1
-
-print(initial_L1_values, 'initial_L1')
-
-initial_channel_numbers=return_channel_numbers(initial_L1_values,new_input_channel_size)
-initial_main_tensors=[i[j].reshape(1,i[j].shape[0], i[j].shape[1]) for j in initial_channel_numbers]
-initial_final=torch.cat(initial_main_tensors,0)
-print(initial_final.shape)
-initial_L1_values=[]
-i=initial_final
-
-'''
-
 '''
 (64,64,3,3)
 (54,54,3,3)
@@ -95,7 +79,7 @@ def prototype(net_state_dict,new_output_sizes):
         weights=torch.cat(our_tensors,0)
         return weights
 
-    '''Concatenates previous_weights with that new random_kernel'''
+    '''Expands/shrinks output and input channels to get desired weights for replacement.'''
     def adjust_weights(weights,
                        old_output_channel_size, old_input_channel_size,
                        new_output_channel_size, new_input_channel_size,
@@ -112,7 +96,6 @@ def prototype(net_state_dict,new_output_sizes):
 
         #SHRINK OUTPUT
         if output_difference<0:
-
             print(weights.shape, 'NEW PREV WEIGHT SIZE')
             #Iterating through a layer's weights
             '''Add L1 Norm Values for Each Channel's Weights'''
@@ -130,7 +113,6 @@ def prototype(net_state_dict,new_output_sizes):
                 print(channel_numbers)
             '''Concatenate those tensors'''
             final=torch.cat(best_tensors,0)
-
         #EXPAND OUTPUT
         else:
             goal=create_weights(output_difference,old_input_channel_size,width,height)
@@ -138,69 +120,12 @@ def prototype(net_state_dict,new_output_sizes):
 
         #SHRINK INPUT
         if input_difference<0:
-
             final=make_same_input(new_input_channel_size,final)
-
-
-
         #EXPAND INPUT
         else:
             goal2=create_weights(new_output_channel_size,input_difference,width,height)
             final=torch.cat((final,goal2),1)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-        if output_difference<0:
-
-                goal2=create_weights(old_output_channel_size,input_difference,width,height)
-                weights=torch.cat((weights,goal2),1)
-
-            #SHRINK INPUT
-            else:
-
-                weights=make_same_input(new_input_channel_size,weights)
-
-
-
-        #EXPAND OUTPUT
-        else:
-            #EXPAND INPUT
-            if input_difference>0:
-                #print(weights.shape, 'PREV WEIGHT SHAPE in ADJUST WEIGHTS')
-
-                goal=create_weights(output_difference,old_input_channel_size,width,height)
-                #print(goal.shape, 'RANDOM KERNEL FROM OUTPUT DIFFERENCE')
-                goal2=create_weights(new_output_channel_size,input_difference,width,height)
-                #print(goal2.shape, 'RANDOM KERNEL FROM INPUT DIFFERENCE')
-
-                output_final=torch.cat((weights,goal),0)
-                #print(output_final.shape, 'ASODNASDIJADSOIJSADOIJSADOIASDJOI')
-                input_final=torch.cat((output_final,goal2),1)
-                #print(input_final.shape,'FINAL ADJUSTED w')
-            else:
-                new_weights=make_same_input(new_input_channel_size,weights)
-                print(weights.shape, 'iubgwihb')
-                goal=create_weights(output_difference,new_input_channel_size,width,height)
-                input_final=torch.cat((new_weights,goal),0)
-        return input_final
-
+        return final
 
     '''Initialise new network with CORRECT OUTPUT SIZES'''
     model=TestNetwork(new_output_sizes=new_output_sizes)
@@ -215,36 +140,29 @@ def prototype(net_state_dict,new_output_sizes):
             continue
 
         '''Extract ONE conv layer weights'''
-
         weights=net_state_dict[param_tensor]
         print(weights.shape, 'PREV WEIGHTS')
         new_weights=model.state_dict()[param_tensor]
         print(new_weights.shape, 'NEW WEIGHTS')
 
-        old_output_channel_size=weights.shape[0]
-        new_output_channel_size=new_weights.shape[0]
+        old_output_channel_size,old_input_channel_size=weights.shape[0],weights.shape[1]
+        new_output_channel_size,new_input_channel_size=new_weights.shape[0],new_weights.shape[1]
 
-        new_input_channel_size=new_weights.shape[1]
-        old_input_channel_size=weights.shape[1]
+        width,height=new_weights.shape[2],new_weights.shape[3]
 
-        width=new_weights.shape[2]
-        height=new_weights.shape[3]
-
+        '''---------------------------------'''
         final=adjust_weights(weights,old_output_channel_size,old_input_channel_size,new_output_channel_size,new_input_channel_size,width,height)
-
-        elif old_output_channel_size<=new_output_channel_size:
-
+        '''---------------------------------'''
 
         print(final.shape, 'FINAL ATTEMPTED LOADING SHAPE')
         print('_______________________________________')
+
         '''LOAD NEW KERNEL IN!'''
         new_state_dict = OrderedDict({str(param_tensor): final})
         model.load_state_dict(new_state_dict, strict=False)
-        #break
 
     end=time.time()
     print(end-start, 'TIME')
-
     return model
 
 net = TestNetwork()
@@ -258,7 +176,7 @@ for param_tensor in net.state_dict():
     print(param_tensor, "\t", net.state_dict()[param_tensor].size())
 #'''
 x=torch.randn(1,3,32,32)
-model=prototype(net.state_dict(),[60,128,20,128,128])
+model=prototype(net.state_dict(),[60,128,20,10,128])
 #NEW
 #'''
 for param_tensor in model.state_dict():
