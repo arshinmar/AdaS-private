@@ -105,7 +105,7 @@ class Network(nn.Module):
         #self.index=[32,18,28,24]
 
         ####################### OUR OWN #######################
-        self.index=[64, 64, 64, 64, 64]
+        self.index=[64,64,64,64,64]
 
         if new_output_sizes!=None:
             self.index=new_output_sizes
@@ -115,7 +115,6 @@ class Network(nn.Module):
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.in_planes)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-
         self.layer1 = self._make_layer(block, self.index[0], num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, self.index[1], num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, self.index[2], num_blocks[2], stride=2)
@@ -151,20 +150,15 @@ def AdaptiveNet(num_classes: int = 10, new_output_sizes=None):
 
 
 def test():
-    net = TestNetwork()
+    net = AdaptiveNet()
     ##print(net)
     x = torch.randn(1, 3, 32, 32)
     y = net(x)
     #print(y.shape)
     for param_tensor in net.state_dict():
-        #if param_tensor.find('conv')==-1:
-        #    continue
+        if param_tensor.find('conv')==-1:
+            continue
         print(param_tensor, "\t", net.state_dict()[param_tensor].size())
-        if param_tensor=='layer1.0.bn1.running_mean':
-            print(net.state_dict()[param_tensor])
-            random_tensor=torch.randn(54)
-            net.state_dict()[param_tensor][:]=random_tensor
-            print(net.state_dict()[param_tensor])
 
 
 #test()
