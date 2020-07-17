@@ -9,9 +9,8 @@ import pandas as pd
 import numpy as np
 import torch
 import yaml
-
+import shutil
 from models.own_network import AdaptiveNet
-from models.resnet import ResNet34
 
 from train_support import run_epochs, get_ranks
 from optim import get_optimizer_scheduler
@@ -49,7 +48,7 @@ def args(sub_parser: _SubParsersAction):
         help="Set data directory path: Default = '.adas-data'")
     sub_parser.add_argument(
         '--output', dest='output',
-        default='.adas-output', type=str,
+        default='adas_search', type=str,
         help="Set output directory path: Default = '.adas-output'")
     sub_parser.add_argument(
         '--checkpoint', dest='checkpoint',
@@ -126,11 +125,14 @@ def initialize(args: APNamespace):
                 dataset=GLOBALS.CONFIG['dataset'],
                 mini_batch_size=GLOBALS.CONFIG['mini_batch_size'])
     GLOBALS.PERFORMANCE_STATISTICS = {}
+    #Gets initial conv size list (string) from config yaml file and converts into int list
+    init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
     GLOBALS.NET = get_net(
                 GLOBALS.CONFIG['network'], num_classes=10 if
                 GLOBALS.CONFIG['dataset'] == 'CIFAR10' else 100 if
                 GLOBALS.CONFIG['dataset'] == 'CIFAR100'
-                else 1000 if GLOBALS.CONFIG['dataset'] == 'ImageNet' else 10)
+                else 1000, init_adapt_conv_size=init_conv)
+
     GLOBALS.METRICS = Metrics(list(GLOBALS.NET.parameters()),
                                       p=GLOBALS.CONFIG['p'])
 
@@ -146,15 +148,15 @@ def initialize(args: APNamespace):
             # lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
             train_loader_len=len(train_loader),
             config=GLOBALS.CONFIG)
+
     GLOBALS.OPTIMIZER = optimizer
     if device == 'cuda':
             GLOBALS.NET = torch.nn.DataParallel(GLOBALS.NET)
             cudnn.benchmark = True
 
-    return train_loader,test_loader,device,optimizer,scheduler,output_path
+    return train_loader,test_loader,device,optimizer,scheduler,output_path,init_conv
 
-def new_output_sizes(current_conv_sizes,ranks):
-    threshold=0.4
+def new_output_sizes(current_conv_sizes,ranks,threshold):
     scaling_factor=np.subtract(ranks,threshold)
     new_conv_sizes = np.multiply(current_conv_sizes,np.add(1,scaling_factor))
     new_conv_sizes = [int(i) for i in new_conv_sizes]
@@ -168,46 +170,44 @@ if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args = parser.parse_args()
-    train_loader,test_loader,device,optimizer,scheduler,output_path = initialize(args)
+    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args)
     print('~~~Initialization Complete. Beginning first training~~~')
-    epochs = range(0, 10)
+    epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
+
+    conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+    conv_data.loc[len(conv_data)] = starting_conv_sizes
+    print(conv_data.to_string())
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
 
-    starting_conv_sizes=[64,64,64,64,64]
     print('~~~First run_epochs done.~~~')
 
-    for i in range(10):
-        output_path = 'adas_search_'+str(i)
-        os.mkdir(output_path)
-        #torch.save(model.state_dict(), 'C:\Users\HaoranJayceWang\Documents\GitHub\AdaS-private\unpackaged')
+    for i in range(1,GLOBALS.CONFIG['adapt_trials']):
+
         ranks = get_ranks(max=True)
-        output_sizes=new_output_sizes(starting_conv_sizes,ranks)
+        output_sizes=new_output_sizes(starting_conv_sizes,ranks,GLOBALS.CONFIG['adapt_rank_threshold'])
+        conv_data.loc[len(conv_data)] = output_sizes
+        print(conv_data.to_string())
         starting_conv_sizes = output_sizes
+
         print('~~~Starting Conv Adjustments~~~')
         new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
         new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
         new_network.load_state_dict(new_model_state_dict)
-        #train_loader,test_loader,device,optimizer,scheduler,output_path = initialize(args)
+
         GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
         cudnn.benchmark = True
+
         optimizer, scheduler = get_optimizer_scheduler(
                 net_parameters=GLOBALS.NET.parameters(),
                 listed_params=list(GLOBALS.NET.parameters()),
-                # init_lr=learning_rate,
-                # optim_method=GLOBALS.CONFIG['optim_method'],
-                # lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
                 train_loader_len=len(train_loader),
                 config=GLOBALS.CONFIG)
-        GLOBALS.METRICS = Metrics(list(GLOBALS.NET.parameters()),
-                                          p=GLOBALS.CONFIG['p'])
+
         print('~~~Training with new model~~~')
-        epochs = range(0, 10)
-        run_epochs(0, epochs, train_loader, test_loader,
+        epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
+        run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path)
 
-
-
-
-
+    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures.xlsx')
     print('Done')

@@ -49,10 +49,11 @@ def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         xlsx_name = \
-            f"{GLOBALS.CONFIG['optim_method']}_AdaS_trial={trial}_" +\
+            f"AdaS_adapt_trial={trial}_" +\
+            f"net={GLOBALS.CONFIG['network']}_" +\
+            f"adapt_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr=" +\
-            f"{GLOBALS.CONFIG['init_lr']}_" +\
-            f"net={GLOBALS.CONFIG['network']}_dataset=" +\
+            f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     else:
         xlsx_name = \
@@ -63,12 +64,6 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     xlsx_path = str(output_path) +'\\'+ xlsx_name
     GLOBALS.EXCEL_PATH = xlsx_path
-    #Load saved state
-    if GLOBALS.FIRST_RUN != True:
-        print('Loading saved state')
-        checkpoint = torch.load(str(GLOBALS.CHECKPOINT_PATH / 'ckpt.pth'))
-        GLOBALS.NET.load_state_dict(checkpoint['net'])
-        GLOBALS.OPTIMIZER.load_state_dict(checkpoint['optimizer'])
 
     for epoch in epochs:
         start_time = time.time()
