@@ -1,7 +1,7 @@
 
 from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
-
+import os
 # import logging
 
 import torch.backends.cudnn as cudnn
@@ -9,6 +9,9 @@ import pandas as pd
 import numpy as np
 import torch
 import yaml
+
+from models.own_network import AdaptiveNet
+from models.resnet import ResNet34
 
 from train_support import run_epochs, get_ranks
 from optim import get_optimizer_scheduler
@@ -20,6 +23,7 @@ from models import get_net
 from data import get_data
 from AdaS import AdaS
 import  global_vars as GLOBALS
+from adaptive_channels import prototype
 
 def args(sub_parser: _SubParsersAction):
     # print("\n---------------------------------")
@@ -135,13 +139,13 @@ def initialize(args: APNamespace):
     GLOBALS.CRITERION = get_loss(GLOBALS.CONFIG['loss'])
 
     optimizer, scheduler = get_optimizer_scheduler(
-                net_parameters=GLOBALS.NET.parameters(),
-                #listed_params=list(GLOBALS.NET.parameters()),
-                init_lr=GLOBALS.CONFIG['init_lr'],
-                optim_method=GLOBALS.CONFIG['optim_method'],
-                lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
-                train_loader_len=len(train_loader),
-                max_epochs=int(GLOBALS.CONFIG['max_epoch']))
+            net_parameters=GLOBALS.NET.parameters(),
+            listed_params=list(GLOBALS.NET.parameters()),
+            # init_lr=learning_rate,
+            # optim_method=GLOBALS.CONFIG['optim_method'],
+            # lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
+            train_loader_len=len(train_loader),
+            config=GLOBALS.CONFIG)
     GLOBALS.OPTIMIZER = optimizer
     if device == 'cuda':
             GLOBALS.NET = torch.nn.DataParallel(GLOBALS.NET)
@@ -149,7 +153,15 @@ def initialize(args: APNamespace):
 
     return train_loader,test_loader,device,optimizer,scheduler,output_path
 
-
+def new_output_sizes(current_conv_sizes,ranks):
+    threshold=0.4
+    scaling_factor=np.subtract(ranks,threshold)
+    new_conv_sizes = np.multiply(current_conv_sizes,np.add(1,scaling_factor))
+    new_conv_sizes = [int(i) for i in new_conv_sizes]
+    print(scaling_factor,'Scaling Factor')
+    print(current_conv_sizes, 'CURRENT CONV SIZES')
+    print(new_conv_sizes,'NEW CONV SIZES')
+    return new_conv_sizes
 
 
 if __name__ == '__main__':
@@ -157,13 +169,44 @@ if __name__ == '__main__':
     args(parser)
     args = parser.parse_args()
     train_loader,test_loader,device,optimizer,scheduler,output_path = initialize(args)
-    print('Beginning first training')
-    epochs = range(0, 3)
+    print('~~~Initialization Complete. Beginning first training~~~')
+    epochs = range(0, 10)
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
-    st = get_ranks(True)
-    print('Averaged Ranks')
-    print(st)
+
+    starting_conv_sizes=[64,64,64,64,64]
+    print('~~~First run_epochs done.~~~')
+
+    for i in range(10):
+        output_path = 'adas_search_'+str(i)
+        os.mkdir(output_path)
+        #torch.save(model.state_dict(), 'C:\Users\HaoranJayceWang\Documents\GitHub\AdaS-private\unpackaged')
+        ranks = get_ranks(max=True)
+        output_sizes=new_output_sizes(starting_conv_sizes,ranks)
+        starting_conv_sizes = output_sizes
+        print('~~~Starting Conv Adjustments~~~')
+        new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+        new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
+        new_network.load_state_dict(new_model_state_dict)
+        #train_loader,test_loader,device,optimizer,scheduler,output_path = initialize(args)
+        GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
+        cudnn.benchmark = True
+        optimizer, scheduler = get_optimizer_scheduler(
+                net_parameters=GLOBALS.NET.parameters(),
+                listed_params=list(GLOBALS.NET.parameters()),
+                # init_lr=learning_rate,
+                # optim_method=GLOBALS.CONFIG['optim_method'],
+                # lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
+                train_loader_len=len(train_loader),
+                config=GLOBALS.CONFIG)
+        GLOBALS.METRICS = Metrics(list(GLOBALS.NET.parameters()),
+                                          p=GLOBALS.CONFIG['p'])
+        print('~~~Training with new model~~~')
+        epochs = range(0, 10)
+        run_epochs(0, epochs, train_loader, test_loader,
+                               device, optimizer, scheduler, output_path)
+
+
 
 
 

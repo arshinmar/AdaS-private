@@ -61,7 +61,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"trial={trial}_initlr={GLOBALS.CONFIG['init_lr']}" +\
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
-    xlsx_path = str(output_path / xlsx_name)
+    xlsx_path = str(output_path) +'\\'+ xlsx_name
     GLOBALS.EXCEL_PATH = xlsx_path
     #Load saved state
     if GLOBALS.FIRST_RUN != True:
@@ -74,7 +74,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         start_time = time.time()
         # print(f"AdaS: Epoch {epoch}/{epochs[-1]} Started.")
         train_loss, train_accuracy, test_loss, test_accuracy = \
-            epoch_iteration(trial,train_loader, test_loader,epoch, device, optimizer if GLOBALS.FIRST_RUN == True else GLOBALS.OPTMIZER, scheduler)
+            epoch_iteration(trial,train_loader, test_loader,epoch, device, optimizer, scheduler)
 
         end_time = time.time()
 
