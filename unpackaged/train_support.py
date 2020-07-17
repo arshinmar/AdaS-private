@@ -1,12 +1,8 @@
 from typing import Tuple
-
 import time
-
 import pandas as pd
-
-#from . import global_vars as GLOBALS
 import global_vars as GLOBALS
-#from .profiler import Profiler
+from profiler import Profiler
 from AdaS import AdaS
 from test import test_main
 from optim.sls import SLS
@@ -63,6 +59,11 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     xlsx_path = str(output_path) +'\\'+ xlsx_name
+    filename = \
+        f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+        f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
+        f"dataset={GLOBALS.CONFIG['dataset']}.csv"
+    Profiler.filename = output_path / filename
     GLOBALS.EXCEL_PATH = xlsx_path
 
     for epoch in epochs:
@@ -98,7 +99,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             break
         '''
 
-#@Profiler
+@Profiler
 def epoch_iteration(trial, train_loader, test_loader, epoch: int,
                     device, optimizer,scheduler) -> Tuple[float, float]:
     # logging.info(f"Adas: Train: Epoch: {epoch}")
