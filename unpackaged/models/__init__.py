@@ -39,8 +39,9 @@ from models.mobilenet import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.efficientnet import EfficientNetB0
 from models.SqueezeNet import SqueezeNet
+from models.own_network import AdaptiveNet
 
-def get_net(network: str, num_classes) -> torch.nn.Module:
+def get_net(network: str, num_classes,init_adapt_conv_size=None) -> torch.nn.Module:
     return VGG('VGG16', num_classes=num_classes) if network == 'VGG16' else \
         ResNet34(num_classes=num_classes) if network == 'ResNet34' else \
         PreActResNet18(num_classes=num_classes) if network == 'PreActResNet18' else \
@@ -55,4 +56,5 @@ def get_net(network: str, num_classes) -> torch.nn.Module:
         ShuffleNetV2(1, num_classes=num_classes) if network == 'ShuffleNetV2' else \
         SqueezeNet(num_classes=num_classes) if network == 'SqueezeNet' else \
         EfficientNetB0(
-            num_classes=num_classes) if network == 'EfficientNetB0' else None
+            num_classes=num_classes) if network == 'EfficientNetB0' else \
+        AdaptiveNet(num_classes=num_classes,new_output_sizes=init_adapt_conv_size) if network == 'AdaptiveNet' else None
