@@ -12,14 +12,48 @@ from test import test_main
 from optim.sls import SLS
 from optim.sps import SPS
 
+def get_ranks(max = False):
+    '''
+    - Read from .adas-output excel file
+    - Get Final epoch ranks
+    OR - get max output rank for each layer
+    '''
+    sheet = pd.read_excel(GLOBALS.EXCEL_PATH,index_col=0)
+
+    out_rank_col = [col for col in sheet if col.startswith('out_rank')]
+    out_ranks = sheet[out_rank_col]
+    #print('out ranks:')
+    #print(out_ranks)
+    if max == False:
+        last_rank_col = out_ranks.iloc[:,-1]
+
+        superblock1 = last_rank_col.iloc[range(0,7)]
+        superblock2 = last_rank_col.iloc[range(8,14)]
+        superblock3 = last_rank_col.iloc[range(15,21)]
+        superblock4 = last_rank_col.iloc[range(22,28)]
+        superblock5 = last_rank_col.iloc[range(29,35)]
+    else:
+        #Gets max out_rank across each row
+        max_ranks = out_ranks.max(axis=1)
+        #Gets the rows of each superblock
+        superblock1 = max_ranks.iloc[range(0,7)]
+        superblock2 = max_ranks.iloc[range(8,14)]
+        superblock3 = max_ranks.iloc[range(15,21)]
+        superblock4 = max_ranks.iloc[range(22,28)]
+        superblock5 = max_ranks.iloc[range(29,35)]
+
+
+    return [superblock1.mean(),superblock2.mean(),superblock3.mean(),superblock4.mean(),superblock5.mean()]
+
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         xlsx_name = \
-            f"{GLOBALS.CONFIG['optim_method']}_AdaS_trial={trial}_" +\
+            f"AdaS_adapt_trial={trial}_" +\
+            f"net={GLOBALS.CONFIG['network']}_" +\
+            f"adapt_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr=" +\
-            f"{GLOBALS.CONFIG['init_lr']}_" +\
-            f"net={GLOBALS.CONFIG['network']}_dataset=" +\
+            f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     else:
         xlsx_name = \
@@ -28,15 +62,17 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"trial={trial}_initlr={GLOBALS.CONFIG['init_lr']}" +\
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
-    xlsx_path = str(output_path / xlsx_name)
+    xlsx_path = str(output_path) +'\\'+ xlsx_name
+    GLOBALS.EXCEL_PATH = xlsx_path
+
     for epoch in epochs:
         start_time = time.time()
         # print(f"AdaS: Epoch {epoch}/{epochs[-1]} Started.")
         train_loss, train_accuracy, test_loss, test_accuracy = \
-            epoch_iteration(trial,
-                            train_loader, test_loader,
-                            epoch, device, optimizer, scheduler)
+            epoch_iteration(trial,train_loader, test_loader,epoch, device, optimizer, scheduler)
+
         end_time = time.time()
+
         if GLOBALS.CONFIG['lr_scheduler'] == 'StepLR':
             scheduler.step()
         total_time = time.time()
@@ -55,21 +91,22 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         df = pd.DataFrame(data=GLOBALS.PERFORMANCE_STATISTICS)
 
         df.to_excel(xlsx_path)
+        '''
+        No early stopping used
         if GLOBALS.EARLY_STOP(train_loss):
             print("AdaS: Early stop activated.")
             break
-
+        '''
 
 #@Profiler
 def epoch_iteration(trial, train_loader, test_loader, epoch: int,
-                    device, optimizer, scheduler) -> Tuple[float, float]:
+                    device, optimizer,scheduler) -> Tuple[float, float]:
     # logging.info(f"Adas: Train: Epoch: {epoch}")
     # global net, performance_statistics, metrics, adas, config
     GLOBALS.NET.train()
     train_loss = 0
     correct = 0
     total = 0
-
     """train CNN architecture"""
     for batch_idx, (inputs, targets) in enumerate(train_loader):
         inputs, targets = inputs.to(device), targets.to(device)
@@ -103,8 +140,15 @@ def epoch_iteration(trial, train_loader, test_loader, epoch: int,
         _, predicted = outputs.max(1)
         total += targets.size(0)
         correct += predicted.eq(targets).sum().item()
+
+        GLOBALS.TRAIN_LOSS = train_loss
+        GLOBALS.TRAIN_CORRECT = correct
+        GLOBALS.TRAIN_TOTAL = total
+
         if GLOBALS.CONFIG['lr_scheduler'] == 'OneCycleLR':
             scheduler.step()
+        #Update optimizer
+        GLOBALS.OPTIMIZER = optimizer
 
         # progress_bar(batch_idx, len(train_loader),
         #              'Loss: %.3f | Acc: %.3f%% (%d/%d)'
@@ -150,5 +194,6 @@ def epoch_iteration(trial, train_loader, test_loader, epoch: int,
             GLOBALS.PERFORMANCE_STATISTICS[f'learning_rate_epoch_{epoch}'] = \
                 optimizer.param_groups[0]['lr']
     test_loss, test_accuracy = test_main(test_loader, epoch, device)
+
     return (train_loss / (batch_idx + 1), 100. * correct / total,
             test_loss, test_accuracy)
