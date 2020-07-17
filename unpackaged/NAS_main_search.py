@@ -16,7 +16,6 @@ from train_support import run_epochs, get_ranks
 from optim import get_optimizer_scheduler
 
 from utils import parse_config
-#from profiler import Profiler
 from metrics import Metrics
 from models import get_net
 from data import get_data
@@ -116,6 +115,7 @@ def initialize(args: APNamespace):
     print(f"AdaS: Pytorch device is set to {device}")
     # global best_acc
     GLOBALS.BEST_ACC = 0  # best test accuracy
+
     start_epoch = 0
     '''
     NOTE: no early stopping functionality considered
