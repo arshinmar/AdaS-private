@@ -114,13 +114,14 @@ class Network(nn.Module):
         self.conv1 = nn.Conv2d(3, self.in_planes, kernel_size=3,
                                stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.in_planes)
+        self.avgpool = nn.AdaptiveAvgPool2d(1)
 
         self.layer1 = self._make_layer(block, self.index[0], num_blocks[0], stride=1)
         self.layer2 = self._make_layer(block, self.index[1], num_blocks[1], stride=2)
         self.layer3 = self._make_layer(block, self.index[2], num_blocks[2], stride=2)
         self.layer4 = self._make_layer(block, self.index[3], num_blocks[3], stride=2)
         self.layer5 = self._make_layer(block, self.index[4], num_blocks[4], stride=2)
-        self.linear = nn.Linear(self.index[3], num_classes)
+        self.linear = nn.Linear(self.index[4], num_classes)
 
     def _make_layer(self, block, planes, num_blocks, stride):
         strides = [stride] + [1]*(num_blocks-1)
@@ -136,12 +137,13 @@ class Network(nn.Module):
         out = self.layer2(out)
         out = self.layer3(out)
         out = self.layer4(out)
-        out = F.avg_pool2d(out, 4)
+        out = self.layer5(out)
+        out = self.avgpool(out)
         out = out.view(out.size(0), -1)
         out = self.linear(out)
         return out
 
-def TestNetwork(num_classes: int = 10, new_output_sizes=None):
+def AdaptiveNet(num_classes: int = 10, new_output_sizes=None):
     if new_output_sizes==None:
         return Network(BasicBlock, [3, 3, 3, 3, 3], num_classes=num_classes)
     else:
@@ -155,9 +157,14 @@ def test():
     y = net(x)
     #print(y.shape)
     for param_tensor in net.state_dict():
-        if param_tensor.find('conv')==-1:
-            continue
+        #if param_tensor.find('conv')==-1:
+        #    continue
         print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+        if param_tensor=='layer1.0.bn1.running_mean':
+            print(net.state_dict()[param_tensor])
+            random_tensor=torch.randn(54)
+            net.state_dict()[param_tensor][:]=random_tensor
+            print(net.state_dict()[param_tensor])
 
 
 #test()

@@ -22,7 +22,7 @@ to
 (128,60,3,3)
 '''
 
-from models.own_network import Network, TestNetwork
+from models.own_network import Network, AdaptiveNet
 import torch, torchvision
 import numpy as np
 
@@ -31,7 +31,7 @@ from collections import OrderedDict
 #from . import global_vars as GLOBALS
 import global_vars as GLOBALS
 import time, copy
-from models.own_network import TestNetwork
+
 
 def prototype(net_state_dict,new_output_sizes):
     '''CONVERTS LIST TO TUPLE'''
@@ -39,21 +39,21 @@ def prototype(net_state_dict,new_output_sizes):
         return tuple(list)
 
     def initial_L1_norm(matrix):
-        main=matrix.numpy()
+        main=matrix
         main=main.reshape((1,main.shape[0],main.shape[1]))
         main_shape=main.shape
         if main_shape!=():
             comp=torch.zeros(main_shape).numpy()
-            return np.sum(np.abs(main-comp))
+            return torch.sum(torch.abs(main-comp))
 
     #RETURNS L1 NORM of a WEIGHTS OF A SINGLE OUTPUT CHANNEL
     def L1_norm(matrix):
-        main=matrix.numpy()
+        main=matrix
         main=main.reshape((1,main.shape[0],main.shape[1],main.shape[2]))
         main_shape=main.shape
         if main_shape!=():
-            comp=torch.zeros(main_shape).numpy()
-            return np.sum(np.abs(main-comp))
+            comp=torch.zeros(main_shape)
+            return torch.sum(torch.abs(main-comp))
 
     '''RETURNS the CHANNELS with the HIGHEST L1 VALUES (the number of channels is size new_output_size)'''
     def return_channel_numbers(L1_values,new_output_size):
@@ -66,7 +66,7 @@ def prototype(net_state_dict,new_output_sizes):
     '''RETURNS A RANDOM KERNEL OF SIZE Out x In x Width x Height'''
     def create_weights(new_output_channel_size,new_input_channel_size,width,height):
         goal=torch.randn(new_output_channel_size,new_input_channel_size,width,height)
-        #print(goal.shape, 'RANDOM KERNEL SHAPE')
+        ##print(goal.shape, 'RANDOM KERNEL SHAPE')
         return goal
 
     '''Makes the weights have the size new_input_channel_size'''
@@ -96,7 +96,7 @@ def prototype(net_state_dict,new_output_sizes):
 
         #SHRINK OUTPUT
         if output_difference<0:
-            print(weights.shape, 'NEW PREV WEIGHT SIZE')
+            #print(weights.shape, 'NEW PREV WEIGHT SIZE')
             #Iterating through a layer's weights
             '''Add L1 Norm Values for Each Channel's Weights'''
             for i in weights:
@@ -107,44 +107,79 @@ def prototype(net_state_dict,new_output_sizes):
             '''Get X MOST IMPORTANT channel numbers"'''
             channel_numbers=return_channel_numbers(L1_values,new_output_channel_size)
             '''Store weights of those X MOST IMPORTANT channel numbers (with some reshaping done)'''
-            try:
-                best_tensors=[weights[i].reshape(1,weights[i].shape[0],weights[i].shape[1], weights[i].shape[2]) for i in channel_numbers]
-            except:
-                print(channel_numbers)
+
+            best_tensors=[weights[i].reshape(1,weights[i].shape[0],weights[i].shape[1], weights[i].shape[2]) for i in channel_numbers]
+
+                #print(channel_numbers)
             '''Concatenate those tensors'''
             final=torch.cat(best_tensors,0)
         #EXPAND OUTPUT
         else:
             goal=create_weights(output_difference,old_input_channel_size,width,height)
             final=torch.cat((weights,goal),0)
-
+        temp_counter=0
         #SHRINK INPUT
+
+        new_tensor=None
+        temp_count=0
+        full_form=[]
         if input_difference<0:
-            final=make_same_input(new_input_channel_size,final)
+
+            full_input_final=[]
+            for i in final:
+                #print(i.shape)
+                for j in i:
+                    initial_L1_values+=[(initial_L1_norm(j),initial_counter)]
+                    initial_counter+=1
+
+                initial_channel_numbers=return_channel_numbers(initial_L1_values,new_input_channel_size)
+                initial_best_tensors=[i[k].reshape(1,1,i[k].shape[0],i[k].shape[1]) for k in initial_channel_numbers]
+                initial_final=torch.cat(initial_best_tensors,1)
+                full_form+=[initial_final]
+
+                initial_final=[]
+                initial_L1_values=[]
+                initial_counter=0
+                #print(new_tensor.shape, 'NEW')
+
+            #final=new_tensor
+            final=torch.cat(full_form,0)
+            #print(final.shape, 'FINALITY')
+
+            #final=make_same_input(new_input_channel_size,final)
         #EXPAND INPUT
         else:
             goal2=create_weights(new_output_channel_size,input_difference,width,height)
             final=torch.cat((final,goal2),1)
         return final
 
+    '''ADD MODULE DOT to each DICTIONARY ID of net_state_dict'''
+
     '''Initialise new network with CORRECT OUTPUT SIZES'''
-    model=TestNetwork(new_output_sizes=new_output_sizes)
+    model=AdaptiveNet(new_output_sizes=new_output_sizes)
 
     start=time.time()
 
-    '''FOR EACH LAYER IN THE NETWORK'''
+    #FOR EACH LAYER IN THE NETWORK
     for param_tensor in net_state_dict:
+        #print(param_tensor)
+        cnt = 0
         '''IF NOT A CONV WEIGHT, SKIP!'''
         val=param_tensor.find('conv')
         if val==-1:
             continue
 
-        '''Extract ONE conv layer weights'''
-        weights=net_state_dict[param_tensor]
-        print(weights.shape, 'PREV WEIGHTS')
-        new_weights=model.state_dict()[param_tensor]
-        print(new_weights.shape, 'NEW WEIGHTS')
 
+        #Extract ONE conv layer weights
+        weights=net_state_dict[param_tensor]
+        #print(weights.shape, 'PREV WEIGHTS')
+
+        try:
+            new_weights=model.state_dict()[param_tensor]
+        except:
+            new_weights=model.state_dict()[param_tensor[7:]]
+        #print(new_weights.shape, 'NEW WEIGHTS')
+        #print(param_tensor,'PARAM TENSOR')
         old_output_channel_size,old_input_channel_size=weights.shape[0],weights.shape[1]
         new_output_channel_size,new_input_channel_size=new_weights.shape[0],new_weights.shape[1]
 
@@ -154,37 +189,39 @@ def prototype(net_state_dict,new_output_sizes):
         final=adjust_weights(weights,old_output_channel_size,old_input_channel_size,new_output_channel_size,new_input_channel_size,width,height)
         '''---------------------------------'''
 
-        print(final.shape, 'FINAL ATTEMPTED LOADING SHAPE')
-        print('_______________________________________')
+        #print(final.shape, 'FINAL ATTEMPTED LOADING SHAPE')
+        #print('_______________________________________')
 
         '''LOAD NEW KERNEL IN!'''
-        new_state_dict = OrderedDict({str(param_tensor): final})
+        new_state_dict = OrderedDict({param_tensor: final})
         model.load_state_dict(new_state_dict, strict=False)
-
+        #break
     end=time.time()
-    print(end-start, 'TIME')
-    return model
+    #print(end-start, 'TIME')
+    return model.state_dict()
 
-net = TestNetwork()
+
+'''net = AdaptiveNet()
 #OLD
-#'''
+
 for param_tensor in net.state_dict():
     val=param_tensor.find('conv')
     if val==-1:
         #If not a conv parameter, skip
         continue
-    print(param_tensor, "\t", net.state_dict()[param_tensor].size())
-#'''
+    #print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+
 x=torch.randn(1,3,32,32)
-model=prototype(net.state_dict(),[60,128,20,10,128])
+model=prototype(net.state_dict(),[100,10,100,10,508])
 #NEW
-#'''
+
 for param_tensor in model.state_dict():
     val=param_tensor.find('conv')
     if val==-1:
         #If not a conv parameter, skip
         continue
-    print(param_tensor, "\t", model.state_dict()[param_tensor].size())
-#'''
+    #print(param_tensor, "\t", model.state_dict()[param_tensor].size())
+
 y=model(x)
-print(y.shape)
+#print(y.shape)
+'''
