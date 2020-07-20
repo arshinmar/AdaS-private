@@ -176,9 +176,28 @@ if __name__ == '__main__':
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     conv_data.loc[len(conv_data)] = starting_conv_sizes
-    print(conv_data.to_string())
+
+    for param_tensor in GLOBALS.NET.state_dict():
+        val=param_tensor.find('bn')
+        if val==-1:
+            continue
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
+        break;
+
+
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
+
+    for param_tensor in GLOBALS.NET.state_dict():
+        val=param_tensor.find('bn')
+        if val==-1:
+            continue
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
+        break;
+
+
 
     print('~~~First run_epochs done.~~~')
 
@@ -187,13 +206,22 @@ if __name__ == '__main__':
         ranks = get_ranks(max=True)
         output_sizes=new_output_sizes(starting_conv_sizes,ranks,GLOBALS.CONFIG['adapt_rank_threshold'])
         conv_data.loc[len(conv_data)] = output_sizes
-        print(conv_data.to_string())
+
         starting_conv_sizes = output_sizes
 
         print('~~~Starting Conv Adjustments~~~')
         new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
         new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
         new_network.load_state_dict(new_model_state_dict)
+
+        print('~~~~~~~~~~~~~~~~~~~~~~~~NEW NET BEFORE INIT ~~~~~~~~~~~~~~~~~~~~~')
+        for param_tensor in new_network.state_dict():
+            val=param_tensor.find('bn')
+            if val==-1:
+                continue
+            print(param_tensor, "\t", new_network.state_dict()[param_tensor].size())
+            print(param_tensor, "\t", new_network.state_dict()[param_tensor])
+            break;
 
         GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
         cudnn.benchmark = True
@@ -205,6 +233,15 @@ if __name__ == '__main__':
                 config=GLOBALS.CONFIG)
 
         print('~~~Training with new model~~~')
+
+        for param_tensor in GLOBALS.NET.state_dict():
+            val=param_tensor.find('bn')
+            if val==-1:
+                continue
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
+            break;
+
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path)
