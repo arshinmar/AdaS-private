@@ -82,6 +82,7 @@ def prototype(net_state_dict,new_output_sizes):
 
     def adjust_bn_weights(bn_weights, new_bn_weights, old_output_channel_size,new_output_channel_size,param_tensor):
         output_difference=new_output_channel_size - old_output_channel_size
+        final = []
         if output_difference<0:
             bn_L1_values=[]
             counter=0
@@ -103,9 +104,11 @@ def prototype(net_state_dict,new_output_sizes):
                 zeros = [0] * output_difference
                 zeros = torch.FloatTensor(zeros)
                 final = torch.cat((bn_weights.cuda(),zeros.cuda()), 0)
-            elif param_tensor.find('running')!=-1:
+            else:
+                final = new_bn_weights
+            '''elif param_tensor.find('running')!=-1:
                 random=torch.randn(output_difference)
-                final=torch.cat((bn_weights.cuda(),random.cuda()),0)
+                final=torch.cat((bn_weights.cuda(),random.cuda()),0)'''
         return final
 
     '''Expands/shrinks output and input channels to get desired weights for replacement.'''
