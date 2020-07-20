@@ -215,7 +215,7 @@ if __name__ == '__main__':
 
         print('~~~Training with new model~~~')
 
-        for param_tensor in GLOBALS.NET.state_dict():
+        '''for param_tensor in GLOBALS.NET.state_dict():
             val=param_tensor.find('conv')
             if val==-1:
                 continue
@@ -229,13 +229,13 @@ if __name__ == '__main__':
                 continue
             print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(),'NEW Network')
             print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor],'NEW Network')
-            break;
+            break;'''
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path)
 
-        for param_tensor in GLOBALS.NET.state_dict():
+        '''for param_tensor in GLOBALS.NET.state_dict():
             val=param_tensor.find('conv')
             if val==-1:
                 continue
@@ -249,7 +249,7 @@ if __name__ == '__main__':
                 continue
             print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
             print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
-            break;
+            break;'''
 
 
 
