@@ -1,0 +1,15 @@
+
+*.pyc
+*.xlsx
+unpackaged/.adas-data/cifar-10-batches-py/data_batch_2
+unpackaged/0_error.png
+unpackaged/.adas-data/cifar-10-python.tar.gz
+unpackaged/.adas-data/cifar-10-batches-py/test_batch
+unpackaged/.adas-data/cifar-10-batches-py/readme.html
+unpackaged/.adas-data/cifar-10-batches-py/data_batch_5
+unpackaged/.adas-data/cifar-10-batches-py/data_batch_4
+unpackaged/.adas-data/cifar-10-batches-py/data_batch_3
+unpackaged/.adas-data/cifar-10-batches-py/data_batch_1
+unpackaged/.adas-data/cifar-10-batches-py/batches.meta
+unpackaged/.adas-checkpoint/ckpt.pth
+*.csv
