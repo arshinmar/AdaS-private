@@ -209,7 +209,7 @@ def prototype(net_state_dict,new_output_sizes):
         elif (param_tensor.find('shortcut')!=-1):
 
             final=adjust_shortcut_weights(weights,new_weights, old_output_channel_size,new_output_channel_size,param_tensor)
-            
+
             '''
         elif (param_tensor.find('bn')!=-1):
             '''---------------------------------'''
