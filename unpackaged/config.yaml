@@ -7,7 +7,7 @@ lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRest
 
 ###### Suggested Tune ######
 n_trials: 10
-beta: 0.7
+beta: 0.8
 init_lr: 0.1
 
 adapt_trials: 10
