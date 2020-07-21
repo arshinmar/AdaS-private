@@ -23,8 +23,7 @@ from AdaS import AdaS
 import  global_vars as GLOBALS
 from adaptive_channels import prototype
 
-from conv_size_barplot import create_layer_plot
-from adaptive_graph import create_adaptive_graphs
+from adaptive_graph import create_adaptive_graphs,create_layer_plot
 
 def args(sub_parser: _SubParsersAction):
     # print("\n---------------------------------")
@@ -168,9 +167,9 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
     print(new_conv_sizes,'NEW CONV SIZES')
     return new_conv_sizes
 
-def create_graphs(conv_data_file_name):
-    create_adaptive_graphs()
-    create_layer_plot(conv_data_file_name)
+def create_graphs(accuracy_data_file_name,conv_data_file_name):
+    create_adaptive_graphs(accuracy_data_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'])
+    create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'])
     return True
 
 
@@ -185,27 +184,8 @@ if __name__ == '__main__':
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     conv_data.loc[len(conv_data)] = starting_conv_sizes
 
-    '''for param_tensor in GLOBALS.NET.state_dict():
-        val=param_tensor.find('bn')
-        if val==-1:
-            continue
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
-        break;'''
-
-
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
-
-    '''for param_tensor in GLOBALS.NET.state_dict():
-        val=param_tensor.find('bn')
-        if val==-1:
-            continue
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
-        break;'''
-
-
 
     print('~~~First run_epochs done.~~~')
 
@@ -223,13 +203,6 @@ if __name__ == '__main__':
         new_network.load_state_dict(new_model_state_dict)
 
         print('~~~~~~~~~~~~~~~~~~~~~~~~NEW NET BEFORE INIT ~~~~~~~~~~~~~~~~~~~~~')
-        '''for param_tensor in new_network.state_dict():
-            val=param_tensor.find('bn')
-            if val==-1:
-                continue
-            print(param_tensor, "\t", new_network.state_dict()[param_tensor].size())
-            print(param_tensor, "\t", new_network.state_dict()[param_tensor])
-            break;'''
 
         GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
         cudnn.benchmark = True
@@ -243,19 +216,45 @@ if __name__ == '__main__':
         print('~~~Training with new model~~~')
 
         '''for param_tensor in GLOBALS.NET.state_dict():
+            val=param_tensor.find('conv')
+            if val==-1:
+                continue
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(),'NEW Network')
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor],'NEW Network')
+            break;
+
+        for param_tensor in GLOBALS.NET.state_dict():
             val=param_tensor.find('bn')
             if val==-1:
                 continue
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size())
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor])
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(),'NEW Network')
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor],'NEW Network')
             break;'''
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path)
 
+        '''for param_tensor in GLOBALS.NET.state_dict():
+            val=param_tensor.find('conv')
+            if val==-1:
+                continue
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
+            break;
+
+        for param_tensor in GLOBALS.NET.state_dict():
+            val=param_tensor.find('bn')
+            if val==-1:
+                continue
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
+            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
+            break;'''
+
+
+
     conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures.xlsx')
 
-    create_graphs(str(output_path)+'\\'+'adapted_architectures.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures.xlsx')
 
     print('Done')
