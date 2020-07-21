@@ -47,6 +47,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         xlsx_name = \
             f"AdaS_adapt_trial={trial}_" +\
             f"net={GLOBALS.CONFIG['network']}_" +\
+            f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
             f"adapt_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_" +\
             f"epochpertrial={GLOBALS.CONFIG['epochs_per_trial']}_"+\
             f"beta={GLOBALS.CONFIG['beta']}_initlr=" +\
@@ -62,6 +63,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     xlsx_path = str(output_path) +'\\'+ xlsx_name
     filename = \
         f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+        f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
         f"threshold={GLOBALS.CONFIG['adapt_rank_threshold']}_"+\
         f"epochpertrial={GLOBALS.CONFIG['epochs_per_trial']}_"+\
         f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
