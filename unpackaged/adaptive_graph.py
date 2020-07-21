@@ -64,7 +64,7 @@ def create_layer_plot(file_name,num_trials):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial')
+    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
     plt.xticks([6*r + 5*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
 
     plt.legend(loc='upper right')
