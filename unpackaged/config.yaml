@@ -11,8 +11,8 @@ beta: 0.7
 init_lr: 0.1
 
 adapt_trials: 10
-init_conv_setting: '128,128,128,128,128'
-adapt_rank_threshold: 0.4
+init_conv_setting: '32,32,32,32,32'
+adapt_rank_threshold: 0.25
 epochs_per_trial: 20
 
 ###### Suggested Default ######

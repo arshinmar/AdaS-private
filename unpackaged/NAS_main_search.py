@@ -196,7 +196,7 @@ if __name__ == '__main__':
         conv_data.loc[len(conv_data)] = output_sizes
 
         starting_conv_sizes = output_sizes
-        
+
         print('~~~Starting Conv Adjustments~~~')
         new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
         new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
@@ -253,8 +253,8 @@ if __name__ == '__main__':
 
 
 
-    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures.xlsx')
+    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+'.xlsx')
 
-    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+'.xlsx')
 
     print('Done')
