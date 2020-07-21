@@ -17,30 +17,28 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     accuracies=[]
     epoch_num=[]
     count=0
-    new_trial_indic='*'
 
     adaptive_set=compile_adaptive_files(file_name,num_trials)
     #print(adaptive_set,'adaptive_set')
-
     for trial in adaptive_set:
         dfs=pd.read_excel(trial)
-        #print(dfs)
+        print(dfs)
         for epoch in range (0,total_num_epochs):
-            epoch_num.append(str(epoch+count)+new_trial_indic)
+            epoch_num.append(epoch+count)
             accuracies.append(dfs['test_acc_epoch_'+str(epoch)][0]*100)
             new_trial_indic=''
         count+=total_num_epochs
-        new_trial_indic='*'
-    #print(epoch_num)
-    #print(accuracies)
-    fig=plt.figure()
+    print(epoch_num)
+    print(accuracies)
+
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
+    #figure=plt.gcf()
+    #figure.set_size_inches(16, 9)
+    plt.xticks(np.arange(min(epoch_num), max(epoch_num)+1, total_num_epochs))
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    #plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
-    figure=plt.gcf()
-    figure.set_size_inches(16, 9)
-    plt.savefig('graph_files/accuracy_plot.png',bbox_inches='tight')
+    plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
+    plt.savefig('graph_files/accuracy_plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+' conv_size='+GLOBALS.CONFIG['init_conv_setting']+'.png',bbox_inches='tight')
     #plt.show()
 
 #create_adaptive_graphs()
@@ -73,7 +71,7 @@ def create_layer_plot(file_name,num_trials):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    #plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
+    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
     if num_trials<=10:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
     else:
@@ -84,5 +82,3 @@ def create_layer_plot(file_name,num_trials):
     figure.set_size_inches(25, 9)
     plt.savefig('graph_files/'+'Layer_Size_Plot.png',bbox_inches='tight')
     return True
-
-create_layer_plot('adapted_architectures/adapted_architectures.xlsx',15)
