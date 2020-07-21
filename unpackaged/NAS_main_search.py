@@ -11,7 +11,7 @@ import torch
 import yaml
 import shutil
 from models.own_network import AdaptiveNet
-
+from early_stop import EarlyStop
 from train_support import run_epochs, get_ranks
 from optim import get_optimizer_scheduler
 
@@ -120,8 +120,20 @@ def initialize(args: APNamespace):
 
     start_epoch = 0
     '''
-    NOTE: no early stopping functionality considered
+    Early stopping stuff
     '''
+    if np.less(float(GLOBALS.CONFIG['early_stop_threshold']), 0):
+        print(
+            "AdaS: Notice: early stop will not be used as it was set to " +
+            f"{GLOBALS.CONFIG['early_stop_threshold']}, training till " +
+            "completion")
+    elif GLOBALS.CONFIG['optim_method'] != 'SGD' and \
+            GLOBALS.CONFIG['lr_scheduler'] != 'AdaS':
+        print(
+            "AdaS: Notice: early stop will not be used as it is not SGD with" +
+            " AdaS, training till completion")
+        GLOBALS.CONFIG['early_stop_threshold'] = -1
+
     train_loader, test_loader = get_data(
                 root=data_path,
                 dataset=GLOBALS.CONFIG['dataset'],
@@ -150,6 +162,10 @@ def initialize(args: APNamespace):
             # lr_scheduler=GLOBALS.CONFIG['lr_scheduler'],
             train_loader_len=len(train_loader),
             config=GLOBALS.CONFIG)
+
+    GLOBALS.EARLY_STOP = EarlyStop(
+                patience=int(GLOBALS.CONFIG['early_stop_patience']),
+                threshold=float(GLOBALS.CONFIG['early_stop_threshold']))
 
     GLOBALS.OPTIMIZER = optimizer
     if device == 'cuda':
@@ -182,12 +198,13 @@ if __name__ == '__main__':
     epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+
     conv_data.loc[len(conv_data)] = starting_conv_sizes
     output_path_string = str(output_path) +'\\'+ GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
     output_path = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
-
 
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
@@ -220,46 +237,98 @@ if __name__ == '__main__':
 
         print('~~~Training with new model~~~')
 
-        '''for param_tensor in GLOBALS.NET.state_dict():
-            val=param_tensor.find('conv')
-            if val==-1:
-                continue
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(),'NEW Network')
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor],'NEW Network')
-            break;
-
-        for param_tensor in GLOBALS.NET.state_dict():
-            val=param_tensor.find('bn')
-            if val==-1:
-                continue
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(),'NEW Network')
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor],'NEW Network')
-            break;'''
-
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path)
 
-        '''for param_tensor in GLOBALS.NET.state_dict():
-            val=param_tensor.find('conv')
-            if val==-1:
-                continue
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
-            break;
 
-        for param_tensor in GLOBALS.NET.state_dict():
-            val=param_tensor.find('bn')
-            if val==-1:
-                continue
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
-            print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
-            break;'''
-
+    for param_tensor in GLOBALS.NET.state_dict():
+        val=param_tensor.find('bn')
+        if val==-1:
+            continue
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK')
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
+        break;
 
 
     conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
-
     create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
+
+    '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
+    print(output_sizes,'OUTPUT SIZES')
+    output_path_string = str(output_path) +'\\'+'last_trial_fulltrain_conv='+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
+    output_path = output_path / f"last_trial_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+
+    if not os.path.exists(output_path_string):
+        os.mkdir(output_path_string)
+
+    torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
+    new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+    new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
+    new_network.load_state_dict(GLOBALS.NET.state_dict())
+
+    GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
+    cudnn.benchmark = True
+
+    optimizer, scheduler = get_optimizer_scheduler(
+            net_parameters=GLOBALS.NET.parameters(),
+            listed_params=list(GLOBALS.NET.parameters()),
+            train_loader_len=len(train_loader),
+            config=GLOBALS.CONFIG)
+
+    print('Using Early stopping of thresh 0.001')
+    GLOBALS.EARLY_STOP = EarlyStop(
+            patience=int(GLOBALS.CONFIG['early_stop_patience']),
+            threshold=0.001)
+
+    for param_tensor in GLOBALS.NET.state_dict():
+        val=param_tensor.find('bn')
+        if val==-1:
+            continue
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK FULL TRAIN')
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK FULL TRAIN')
+        break;
+
+    epochs = range(0,1)
+    run_epochs(i, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path)
+
+    '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
+
+    output_path_string = str(output_path) +'\\'+'fresh_net_fulltrain_conv='+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
+    output_path = output_path / f"fresh_net_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+
+    if not os.path.exists(output_path_string):
+        os.mkdir(output_path_string)
+    #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
+    #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+    new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
+    #new_network.load_state_dict(GLOBALS.NET.state_dict())
+
+    GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
+    cudnn.benchmark = True
+
+    optimizer, scheduler = get_optimizer_scheduler(
+            net_parameters=GLOBALS.NET.parameters(),
+            listed_params=list(GLOBALS.NET.parameters()),
+            train_loader_len=len(train_loader),
+            config=GLOBALS.CONFIG)
+
+    print('Using Early stopping of thresh 0.001')
+    GLOBALS.EARLY_STOP = EarlyStop(
+            patience=int(GLOBALS.CONFIG['early_stop_patience']),
+            threshold=0.001)
+
+    for param_tensor in GLOBALS.NET.state_dict():
+        val=param_tensor.find('bn')
+        if val==-1:
+            continue
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'FRESH')
+        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
+        break;
+
+    epochs = range(0,1)
+    run_epochs(i, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path)
+
+    '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
 
     print('Done')
