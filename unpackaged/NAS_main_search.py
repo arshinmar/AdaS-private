@@ -183,6 +183,11 @@ if __name__ == '__main__':
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     conv_data.loc[len(conv_data)] = starting_conv_sizes
+    output_path_string = str(output_path) +'\\'+ GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
+    output_path = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+    if not os.path.exists(output_path_string):
+        os.mkdir(output_path_string)
+
 
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path)
