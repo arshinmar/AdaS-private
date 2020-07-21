@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-
+import global_vars as GLOBALS
 def compile_adaptive_files(file_name,num_trials):
     #CHANGE THIS VALUE FOR NUMBER OF TRIALS
     num_trials=num_trials
@@ -37,7 +37,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    plt.title('AdaptiveNet: Test Accuracy vs Epoch')
+    plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
     plt.savefig('graph_files/accuracy_plot.png')
     #plt.show()
 
@@ -64,7 +64,7 @@ def create_layer_plot(file_name,num_trials):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial')
+    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
     plt.xticks([6*r + 5*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
 
     plt.legend(loc='upper right')

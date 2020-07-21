@@ -253,8 +253,8 @@ if __name__ == '__main__':
 
 
 
-    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures.xlsx')
+    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+'.xlsx')
 
-    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+'.xlsx')
 
     print('Done')
