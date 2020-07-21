@@ -37,8 +37,10 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
-    plt.savefig('graph_files/accuracy_plot.png')
+    #plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
+    figure=plt.gcf()
+    figure.set_size_inches(16, 9)
+    plt.savefig('graph_files/accuracy_plot.png',bbox_inches='tight')
     #plt.show()
 
 #create_adaptive_graphs()
@@ -52,7 +54,14 @@ def create_layer_plot(file_name,num_trials):
         layers_size_list+=[main]
 
     barWidth=0.5
-    layers_list=[[6,12,18,24,30]]
+    if num_trials<=10:
+        mult_val,temp_val=6,5
+        layers_list=[[6,12,18,24,30]]
+
+    else:
+        mult_val,temp_val=12,10
+        layers_list=[[12,24,36,48,60]]
+
     for i in range(1,len(layers_size_list),1):
         temp=[x + barWidth for x in layers_list[i-1]]
         layers_list+=[temp]
@@ -64,10 +73,16 @@ def create_layer_plot(file_name,num_trials):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
-    plt.xticks([6*r + 5*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
+    #plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+GLOBALS.CONFIG['adapt_rank_threshold']+')')
+    if num_trials<=10:
+        plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
+    else:
+        plt.xticks([mult_val*r + temp_val*barWidth + 6 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
 
     plt.legend(loc='upper right')
-    plt.savefig('graph_files/'+'Layer_Size_Plot.png')
+    figure=plt.gcf()
+    figure.set_size_inches(25, 9)
+    plt.savefig('graph_files/'+'Layer_Size_Plot.png',bbox_inches='tight')
+    return True
 
-create_layer_plot('adapted_architectures/adapted_architectures.xlsx',10)
+create_layer_plot('adapted_architectures/adapted_architectures.xlsx',15)
