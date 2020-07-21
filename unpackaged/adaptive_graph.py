@@ -69,3 +69,5 @@ def create_layer_plot(file_name,num_trials):
 
     plt.legend(loc='upper right')
     plt.savefig('graph_files/'+'Layer_Size_Plot.png')
+
+create_layer_plot('adapted_architectures/adapted_architectures.xlsx',10)
