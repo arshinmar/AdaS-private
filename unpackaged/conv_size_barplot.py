@@ -25,9 +25,8 @@ def create_layer_plot(file_name):
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
     plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial')
-    plt.xticks([6*r + 5*barWidth + 6 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
+    plt.xticks([6*r + 5*barWidth + 4.5 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
 
     plt.legend(loc='upper right')
-    plt.savefig('graph_files/'+'VGG_knowledge_gain_graph_scaled.png')
-
-create_layer_plot(file_name)
+    plt.show()
+    plt.savefig('graph_files/'+'Layer_Size_Plot.png')
