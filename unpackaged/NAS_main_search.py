@@ -201,13 +201,13 @@ if __name__ == '__main__':
 
     conv_data.loc[len(conv_data)] = starting_conv_sizes
     output_path_string = str(output_path) +'\\'+ GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
-    output_path = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+    output_path_train = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
 
     run_epochs(0, epochs, train_loader, test_loader,
-                           device, optimizer, scheduler, output_path)
+                           device, optimizer, scheduler, output_path_train)
 
     print('~~~First run_epochs done.~~~')
 
@@ -239,7 +239,7 @@ if __name__ == '__main__':
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         run_epochs(i, epochs, train_loader, test_loader,
-                               device, optimizer, scheduler, output_path)
+                               device, optimizer, scheduler, output_path_train)
 
 
     for param_tensor in GLOBALS.NET.state_dict():
@@ -251,13 +251,13 @@ if __name__ == '__main__':
         break;
 
 
-    conv_data.to_excel(str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,str(output_path)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
+    conv_data.to_excel(str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
 
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
     print(output_sizes,'OUTPUT SIZES')
     output_path_string = str(output_path) +'\\'+'last_trial_fulltrain_conv='+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
-    output_path = output_path / f"last_trial_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+    output_path_full = output_path / f"last_trial_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
@@ -265,7 +265,7 @@ if __name__ == '__main__':
     torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
-    new_network.load_state_dict(GLOBALS.NET.state_dict())
+    new_network.load_state_dict(new_model_state_dict)
 
     GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
     cudnn.benchmark = True
@@ -289,13 +289,13 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK FULL TRAIN')
         break;
 
-    epochs = range(0,1)
-    run_epochs(i, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path)
+    epochs = range(0,250)
+    run_epochs(i, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_full)
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
     output_path_string = str(output_path) +'\\'+'fresh_net_fulltrain_conv='+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
-    output_path = output_path / f"fresh_net_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+    output_path_fresh = output_path / f"fresh_net_fulltrain_conv={GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
@@ -326,8 +326,8 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
         break;
 
-    epochs = range(0,1)
-    run_epochs(i, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path)
+    epochs = range(0,250)
+    run_epochs(i, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fresh)
 
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
 

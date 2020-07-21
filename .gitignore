@@ -13,3 +13,7 @@ unpackaged/.adas-data/cifar-10-batches-py/data_batch_1
 unpackaged/.adas-data/cifar-10-batches-py/batches.meta
 unpackaged/.adas-checkpoint/ckpt.pth
 *.csv
+*.png
+*.rar
+*.txt
+*.xlsx
