@@ -28,8 +28,8 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
             accuracies.append(dfs['test_acc_epoch_'+str(epoch)][0]*100)
             new_trial_indic=''
         count+=total_num_epochs
-    print(epoch_num)
-    print(accuracies)
+#    print(epoch_num)
+#    print(accuracies)
 
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
     #figure=plt.gcf()
@@ -38,7 +38,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
     plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
-    plt.savefig('graph_files/accuracy_plot.png',bbox_inches='tight')
+    plt.savefig('graph_files/accuracy_plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'.png',bbox_inches='tight')
     #plt.show()
 
 #create_adaptive_graphs()
@@ -80,5 +80,6 @@ def create_layer_plot(file_name,num_trials):
     plt.legend(loc='upper right')
     figure=plt.gcf()
     figure.set_size_inches(25, 9)
-    plt.savefig('graph_files/'+'Layer_Size_Plot.png',bbox_inches='tight')
+    plt.savefig('graph_files/Layer_Size_Plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'.png',bbox_inches='tight')
+
     return True
