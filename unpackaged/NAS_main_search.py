@@ -312,7 +312,7 @@ if __name__ == '__main__':
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_full)
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
-
+    GLOBALS.CONFIG['beta'] = 0.95
     output_path_string = str(output_path) +'\\'+'fresh_conv=32x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
     output_path_fresh = output_path / f"fresh_conv=32x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
