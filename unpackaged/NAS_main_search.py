@@ -189,6 +189,12 @@ def create_graphs(accuracy_data_file_name,conv_data_file_name):
     return True
 
 
+
+
+
+
+
+
 if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__)
     args(parser)
@@ -290,7 +296,7 @@ if __name__ == '__main__':
         break;
 
     epochs = range(0,250)
-    run_epochs(i, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_full)
+    run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_full)
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
@@ -327,7 +333,7 @@ if __name__ == '__main__':
         break;
 
     epochs = range(0,250)
-    run_epochs(i, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fresh)
+    run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fresh)
 
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
 
