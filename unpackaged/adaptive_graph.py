@@ -81,7 +81,7 @@ def create_layer_plot(file_name,num_trials):
     plt.legend(loc='upper right')
     figure=plt.gcf()
     figure.set_size_inches(25, 9)
-    plt.savefig('graph_files/Layer_Size_Plot_thresh='+'0.4'+'_conv_size='+'32,32,32,32,32'+'_epochpertrial='+'20'+'.png',bbox_inches='tight')
+    plt.savefig('graph_files/Layer_Size_Plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])+'.png',bbox_inches='tight')
     #plt.savefig('graph_files/Layer_Size_Plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'.png',bbox_inches='tight')
 
     return True
