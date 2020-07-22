@@ -71,8 +71,7 @@ def create_layer_plot(file_name,num_trials):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    #plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
-    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+'32,32,32,32,32'+' thresh='+'0.4'+')')
+    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
     if num_trials<=10:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
     else:
@@ -82,6 +81,5 @@ def create_layer_plot(file_name,num_trials):
     figure=plt.gcf()
     figure.set_size_inches(25, 9)
     plt.savefig('graph_files/Layer_Size_Plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])+'.png',bbox_inches='tight')
-    return True
 
-create_layer_plot('adapted_architectures/temp_adapted_architectures.xlsx',10)
+    return True
