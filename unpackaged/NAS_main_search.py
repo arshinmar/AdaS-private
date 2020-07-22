@@ -201,7 +201,7 @@ if __name__ == '__main__':
     args = parser.parse_args()
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args)
     print('~~~Initialization Complete. Beginning first training~~~')
-    '''
+
     epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
@@ -262,29 +262,29 @@ if __name__ == '__main__':
     create_graphs(GLOBALS.EXCEL_PATH,str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
 
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
-    '''
-    output_sizes = [56,65,57,46,24]
-    output_path_string = str(output_path) +'\\'+'full_conv=64x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_full = output_path / f"full_conv=64x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    
+    #output_sizes = [56,65,57,46,24]
+    output_path_string = str(output_path) +'\\'+'full_conv=128x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_full = output_path / f"full_conv=128x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
 
     #TRAIN FULL AFTER CHANNEL SEARCH
-    '''
+
     torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
     new_network.load_state_dict(new_model_state_dict)
-    '''
+
 
     #TRAIN FULL ONLY (LOAD WEIGHTS)
-    #'''
+    '''
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_64,64,64,64,64_thresh=0.3'),output_sizes)
     new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
     new_network.load_state_dict(new_model_state_dict)
-    #'''
+    '''
 
     GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
     cudnn.benchmark = True
@@ -315,8 +315,8 @@ if __name__ == '__main__':
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
-    output_path_string = str(output_path) +'\\'+'fresh_conv=64x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_fresh = output_path / f"fresh_conv=64x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    output_path_string = str(output_path) +'\\'+'fresh_conv=128x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_fresh = output_path / f"fresh_conv=128x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     print(output_path_string)
     print(output_path_fresh)
