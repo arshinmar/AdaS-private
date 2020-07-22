@@ -156,9 +156,10 @@ def test():
     y = net(x)
     #print(y.shape)
     for param_tensor in net.state_dict():
-        if param_tensor.find('conv')==-1:
-            continue
+        #if param_tensor.find('conv')==-1:
+        #    continue
         print(param_tensor, "\t", net.state_dict()[param_tensor].size())
+        if param_tensor=='layer1.0.bn2.running_mean':
+            print(net.state_dict()[param_tensor])
 
-
-#test()
+test()
