@@ -97,12 +97,9 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         df = pd.DataFrame(data=GLOBALS.PERFORMANCE_STATISTICS)
 
         df.to_excel(xlsx_path)
-        '''
-        No early stopping used
         if GLOBALS.EARLY_STOP(train_loss):
             print("AdaS: Early stop activated.")
             break
-        '''
 
 @Profiler
 def epoch_iteration(trial, train_loader, test_loader, epoch: int,

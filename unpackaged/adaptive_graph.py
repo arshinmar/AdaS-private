@@ -22,7 +22,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     #print(adaptive_set,'adaptive_set')
     for trial in adaptive_set:
         dfs=pd.read_excel(trial)
-        print(dfs)
+        #print(dfs)
         for epoch in range (0,total_num_epochs):
             epoch_num.append(epoch+count)
             accuracies.append(dfs['test_acc_epoch_'+str(epoch)][0]*100)
