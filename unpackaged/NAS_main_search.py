@@ -263,9 +263,9 @@ if __name__ == '__main__':
 
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
     '''
-    output_sizes = [32,33,18,24,18]
-    output_path_string = str(output_path) +'\\'+'full_conv=32x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_full = output_path / f"full_conv=32x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    output_sizes = [56,65,57,46,24]
+    output_path_string = str(output_path) +'\\'+'full_conv=64x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_full = output_path / f"full_conv=64x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
@@ -281,7 +281,7 @@ if __name__ == '__main__':
     #TRAIN FULL ONLY (LOAD WEIGHTS)
     #'''
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
+    new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_64,64,64,64,64_thresh=0.3'),output_sizes)
     new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
     new_network.load_state_dict(new_model_state_dict)
     #'''
@@ -315,8 +315,8 @@ if __name__ == '__main__':
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
-    output_path_string = str(output_path) +'\\'+'fresh_conv=32x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_fresh = output_path / f"fresh_conv=32x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    output_path_string = str(output_path) +'\\'+'fresh_conv=64x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_fresh = output_path / f"fresh_conv=64x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     print(output_path_string)
     print(output_path_fresh)
