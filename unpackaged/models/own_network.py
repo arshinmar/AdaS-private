@@ -150,16 +150,19 @@ def AdaptiveNet(num_classes: int = 10, new_output_sizes=None):
 
 
 def test():
-    net = AdaptiveNet()
+    net = AdaptiveNet(new_output_sizes=[64,64,64,64,64])
     ##print(net)
     x = torch.randn(1, 3, 32, 32)
     y = net(x)
     #print(y.shape)
-    for param_tensor in net.state_dict():
+    pytorch_total_params = sum(p.numel() for p in net.parameters() if p.requires_grad)
+    print(pytorch_total_params)
+
+    '''for param_tensor in net.state_dict():
         #if param_tensor.find('conv')==-1:
         #    continue
         print(param_tensor, "\t", net.state_dict()[param_tensor].size())
         if param_tensor=='layer1.0.bn2.running_mean':
-            print(net.state_dict()[param_tensor])
+            print(net.state_dict()[param_tensor])'''
 
 test()
