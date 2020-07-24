@@ -4,6 +4,7 @@ from pathlib import Path
 import os
 # import logging
 
+import math
 import torch.backends.cudnn as cudnn
 import pandas as pd
 import numpy as np
@@ -12,7 +13,7 @@ import yaml
 import shutil
 from models.own_network import AdaptiveNet
 from early_stop import EarlyStop
-from train_support import run_epochs, get_ranks
+from train_support import run_epochs, get_ranks, get_max_ranks_by_layer
 from optim import get_optimizer_scheduler
 
 from utils import parse_config
@@ -185,17 +186,108 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
 
 def create_graphs(accuracy_data_file_name,conv_data_file_name):
     create_adaptive_graphs(accuracy_data_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'])
-    create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'])
+    #create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'])
     return True
 
+'''
+input_ranks = 36-long list
+output_ranks = 36-long list
 
+conv_size_list = 33-long list
 
+output_conv_size_list = 33-long list
+'''
 
+'''[3,3,3,3,3]'''
 
+def even_round(number):
+    return int(round(number/2)*2)
 
+def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes):
+    #Note that input_ranks/output_ranks may have a different size than conv_size_list
+    #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
+    threshold=0.3
+    input_ranks_layer_1, output_ranks_layer_1 = input_ranks[0], output_ranks[0]
+    input_ranks_superblock_1, output_ranks_superblock_1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
+    input_ranks_superblock_2, output_ranks_superblock_2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
+    input_ranks_superblock_3, output_ranks_superblock_3 = input_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]], output_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]]
+    input_ranks_superblock_4, output_ranks_superblock_4 = input_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]
+    input_ranks_superblock_5, output_ranks_superblock_5 = input_ranks[shortcut_indexes[3]+1:], output_ranks[shortcut_indexes[3]+1:]
 
+    new_input_ranks = [input_ranks_superblock_1] + [input_ranks_superblock_2] + [input_ranks_superblock_3] + [input_ranks_superblock_4] + [input_ranks_superblock_5]
+    new_output_ranks = [output_ranks_superblock_1] + [output_ranks_superblock_2] + [output_ranks_superblock_3] + [output_ranks_superblock_4] + [output_ranks_superblock_5]
+
+    block_averages=[]
+    block_averages_input=[]
+    block_averages_output=[]
+    grey_list_input=[]
+    grey_list_output=[]
+
+    for i in range(0,len(new_input_ranks),1):
+        block_averages+=[[]]
+        block_averages_input+=[[]]
+        block_averages_output+=[[]]
+        grey_list_input+=[[]]
+        grey_list_output+=[[]]
+        temp_counter=0
+        for j in range(1,len(new_input_ranks[i]),2):
+            block_averages_input[i]=block_averages_input[i]+[new_input_ranks[i][j]]
+            block_averages_output[i]=block_averages_output[i]+[new_output_ranks[i][j-1]]
+
+            grey_list_input[i]=grey_list_input[i]+[new_input_ranks[i][j-1]]
+            grey_list_output[i]=grey_list_output[i]+[new_output_ranks[i][j]]
+
+        block_averages_input[i]=block_averages_input[i]+[np.average(np.array(grey_list_input[i]))]
+        block_averages_output[i]=block_averages_output[i]+[np.average(np.array(grey_list_output[i]))]
+        block_averages[i]=np.average(np.array([block_averages_input[i],block_averages_output[i]]),axis=0)
+
+    print(block_averages, 'BLOCK AVERAGES')
+    print(conv_size_list,'CONV SIZE LIST')
+    output_conv_size_list=list(conv_size_list)
+    for i in range(0,len(block_averages)):
+        for j in range(0,len(conv_size_list[i])):
+            if (i==0):
+                if (j%2==0):
+                    scaling_factor=block_averages[i][-1]-threshold
+                else:
+                    scaling_factor=block_averages[i][int((j-1)/2)]-threshold
+            else:
+                if (j%2==1):
+                    scaling_factor=block_averages[i][-1]-threshold
+                else:
+                    scaling_factor=block_averages[i][int(j/2)]-threshold
+            output_conv_size_list[i][j]=even_round(output_conv_size_list[i][j]*(1+scaling_factor))
+
+    GLOBALS.super1_idx = output_conv_size_list[0]
+    GLOBALS.super2_idx = output_conv_size_list[1]
+    GLOBALS.super3_idx = output_conv_size_list[2]
+    GLOBALS.super4_idx = output_conv_size_list[3]
+    GLOBALS.super5_idx = output_conv_size_list[4]
+    GLOBALS.index = output_conv_size_list[0] + output_conv_size_list[1] + output_conv_size_list[2] + output_conv_size_list[3] + output_conv_size_list[4]
+
+    print(output_conv_size_list,'OUTPUT CONV SIZE LIST')
+    return output_conv_size_list
+
+def network_initialize(new_network):
+    GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
+    GLOBALS.NET_RAW = new_network.cuda()
+    cudnn.benchmark = True
+
+    optimizer, scheduler = get_optimizer_scheduler(
+            net_parameters=GLOBALS.NET.parameters(),
+            listed_params=list(GLOBALS.NET.parameters()),
+            train_loader_len=len(train_loader),
+            config=GLOBALS.CONFIG)
+    return optimizer, scheduler
+
+def update_network(output_sizes):
+    new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+    new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
+    new_network.load_state_dict(new_model_state_dict)
+    return new_network
 
 if __name__ == '__main__':
+
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args = parser.parse_args()
@@ -206,7 +298,7 @@ if __name__ == '__main__':
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
 
-    conv_data.loc[len(conv_data)] = starting_conv_sizes
+    #conv_data.loc[len(conv_data)] = starting_conv_sizes
     output_path_string = str(output_path) +'\\'+ GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
     output_path_train = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
 
@@ -220,27 +312,17 @@ if __name__ == '__main__':
 
     for i in range(1,GLOBALS.CONFIG['adapt_trials']):
 
-        ranks = get_ranks(max=True)
-        output_sizes=new_output_sizes(starting_conv_sizes,ranks,GLOBALS.CONFIG['adapt_rank_threshold'])
+        input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
+        shortcut_indexes=[7,14,21,28]
+        conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
+        index_conv_size_list=GLOBALS.index
+        output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes)
+
         conv_data.loc[len(conv_data)] = output_sizes
 
-        starting_conv_sizes = output_sizes
-
         print('~~~Starting Conv Adjustments~~~')
-        new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-        new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
-        new_network.load_state_dict(new_model_state_dict)
-
-        print('~~~~~~~~~~~~~~~~~~~~~~~~NEW NET BEFORE INIT ~~~~~~~~~~~~~~~~~~~~~')
-
-        GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
-        cudnn.benchmark = True
-
-        optimizer, scheduler = get_optimizer_scheduler(
-                net_parameters=GLOBALS.NET.parameters(),
-                listed_params=list(GLOBALS.NET.parameters()),
-                train_loader_len=len(train_loader),
-                config=GLOBALS.CONFIG)
+        new_network=update_network(output_sizes)
+        optimizer,scheduler=network_initialize(new_network)
 
         print('~~~Training with new model~~~')
 
@@ -257,50 +339,32 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
         break;
 
-
     conv_data.to_excel(str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
     create_graphs(GLOBALS.EXCEL_PATH,str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
+    torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
+
+    print('done')
 
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
-
-    #output_sizes = [56,65,57,46,24]
-    output_path_string = str(output_path) +'\\'+'full_conv='+GLOBALS.CONFIG['init_conv_setting'][:GLOBALS.CONFIG['init_conv_setting'].find(',')]+'x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_full = output_path / f"full_conv={GLOBALS.CONFIG['init_conv_setting'][:GLOBALS.CONFIG['init_conv_setting'].find(',')]}x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    GLOBALS.CONFIG['beta'] = 0.95
+    output_path_string = str(output_path) +'\\'+'full_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_full = output_path / f"full_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     if not os.path.exists(output_path_string):
         os.mkdir(output_path_string)
 
-    #TRAIN FULL AFTER CHANNEL SEARCH
-
-    torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
+    new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+    #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
     new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
     new_network.load_state_dict(new_model_state_dict)
 
-
-    #TRAIN FULL ONLY (LOAD WEIGHTS)
-    '''
-    #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_64,64,64,64,64_thresh=0.3'),output_sizes)
-    new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
-    new_network.load_state_dict(new_model_state_dict)
-    '''
-
-    GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
-    cudnn.benchmark = True
-
-    optimizer, scheduler = get_optimizer_scheduler(
-            net_parameters=GLOBALS.NET.parameters(),
-            listed_params=list(GLOBALS.NET.parameters()),
-            train_loader_len=len(train_loader),
-            config=GLOBALS.CONFIG)
+    optimizer,scheduler=network_initialize(new_network)
 
     print('Using Early stopping of thresh 0.001')
     GLOBALS.EARLY_STOP = EarlyStop(
             patience=int(GLOBALS.CONFIG['early_stop_patience']),
             threshold=0.001)
-
-    GLOBALS.CONFIG['beta'] = 0.95
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
@@ -315,8 +379,8 @@ if __name__ == '__main__':
 
     '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
-    output_path_string = str(output_path) +'\\'+'fresh_conv='+GLOBALS.CONFIG['init_conv_setting'][:GLOBALS.CONFIG['init_conv_setting'].find(',')]+'x5_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_fresh = output_path / f"fresh_conv={GLOBALS.CONFIG['init_conv_setting'][:GLOBALS.CONFIG['init_conv_setting'].find(',')]}x5_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
+    output_path_string = str(output_path) +'\\'+'fresh_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    output_path_fresh = output_path / f"fresh_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
     print(output_path_string)
     print(output_path_fresh)
@@ -329,21 +393,12 @@ if __name__ == '__main__':
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
 
-    GLOBALS.NET = torch.nn.DataParallel(new_network.cuda())
-    cudnn.benchmark = True
-
-    optimizer, scheduler = get_optimizer_scheduler(
-            net_parameters=GLOBALS.NET.parameters(),
-            listed_params=list(GLOBALS.NET.parameters()),
-            train_loader_len=len(train_loader),
-            config=GLOBALS.CONFIG)
+    optimizer,scheduler=network_initialize(new_network)
 
     print('Using Early stopping of thresh 0.001')
     GLOBALS.EARLY_STOP = EarlyStop(
             patience=int(GLOBALS.CONFIG['early_stop_patience']),
             threshold=0.001)
-
-    GLOBALS.CONFIG['beta'] = 0.95
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
@@ -354,8 +409,7 @@ if __name__ == '__main__':
         break;
 
     epochs = range(0,250)
-    print('OUTPUT PATH FRESH')
-    print(output_path_fresh)
+
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fresh)
 
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'

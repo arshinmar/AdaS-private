@@ -6,12 +6,12 @@ lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRest
 
 
 ###### Suggested Tune ######
-n_trials: 10
-beta: 0.8
+n_trials: 1
+beta: 0.7
 init_lr: 0.1
 
 adapt_trials: 10
-init_conv_setting: '96,96,96,96,96'
+init_conv_setting: '64,64,64,64,64'
 adapt_rank_threshold: 0.3
 epochs_per_trial: 20
 
