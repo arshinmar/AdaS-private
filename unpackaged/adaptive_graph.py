@@ -45,20 +45,22 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
 
 def create_layer_plot(file_name,num_trials):
     layers_info=pd.read_excel(file_name)
-    layers_size_list=[]
+    layers_size_list=[[]]
 
     for i in range(len(layers_info.iloc[:,0].to_numpy())):
         main=layers_info.iloc[i,1:].to_numpy()
         layers_size_list+=[main]
 
     barWidth=0.5
+    layers_list=[[]]
     if num_trials<=10:
         mult_val,temp_val=6,5
-        layers_list=[[6,12,18,24,30]]
-
+        for i in range(1,32,1):
+            layers_list[0]+=[6*i]
     else:
         mult_val,temp_val=12,10
-        layers_list=[[12,24,36,48,60]]
+        for i in range(1,32,1):
+            layers_list[0]+=[12*i]
 
     for i in range(1,len(layers_size_list),1):
         temp=[x + barWidth for x in layers_list[i-1]]
