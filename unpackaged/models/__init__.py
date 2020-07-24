@@ -57,4 +57,4 @@ def get_net(network: str, num_classes,init_adapt_conv_size=None) -> torch.nn.Mod
         SqueezeNet(num_classes=num_classes) if network == 'SqueezeNet' else \
         EfficientNetB0(
             num_classes=num_classes) if network == 'EfficientNetB0' else \
-        AdaptiveNet(num_classes=num_classes,new_output_sizes=init_adapt_conv_size) if network == 'AdaptiveNet' else None
+        AdaptiveNet(num_classes=num_classes) if network == 'AdaptiveNet' else None

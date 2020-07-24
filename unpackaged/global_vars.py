@@ -1,6 +1,7 @@
 global NET, PERFORMANCE_STATISTICS, OPTIMIZER ,CRITERION, BEST_ACC, METRICS, ADAS, \
     CHECKPOINT_PATH, EARLY_STOP,CONFIG,EXCEL_PATH,THRESHOLD
 NET = None
+NET_RAW = None
 PERFORMANCE_STATISTICS = None
 CRITERION = None
 BEST_ACC = 0
@@ -10,5 +11,11 @@ CHECKPOINT_PATH = None
 EARLY_STOP = None
 CONFIG = None
 OPTIMIZER = None
-EXCEL_PATH = ''
+EXCEL_PATH = 'path'
 THRESHOLD = 0
+super1_idx = [64, 64, 64, 64, 64, 64, 64]
+super2_idx = [64, 64, 64, 64, 64, 64]
+super3_idx = [64, 64, 64, 64, 64, 64]
+super4_idx = [64, 64, 64, 64, 64, 64]
+super5_idx = [64, 64, 64, 64, 64, 64]
+index = None

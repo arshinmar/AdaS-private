@@ -189,6 +189,8 @@ def prototype(net_state_dict,new_output_sizes):
     model=AdaptiveNet(new_output_sizes=new_output_sizes)
 
     start=time.time()
+    '''for param_tensor in net_state_dict:
+        print(param_tensor, "\t", net_state_dict[param_tensor].size())'''
     for param_tensor in net_state_dict:
         if (param_tensor.find('num_batches_tracked')!=-1):
             continue

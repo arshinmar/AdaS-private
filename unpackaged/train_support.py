@@ -8,6 +8,25 @@ from test import test_main
 from optim.sls import SLS
 from optim.sps import SPS
 
+def get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH):
+    '''
+    -returns 2 36-lists of the maximum value of the input and output ranks from the datafile produced after one adapting trial
+    '''
+    sheet = pd.read_excel(path,index_col=0)
+    out_rank_col = [col for col in sheet if col.startswith('out_rank')]
+    in_rank_col = [col for col in sheet if col.startswith('in_rank')]
+
+    out_ranks = sheet[out_rank_col]
+    in_ranks = sheet[in_rank_col]
+
+    out_max_ranks = out_ranks.max(axis=1)
+    in_max_ranks = in_ranks.max(axis=1)
+
+    out_max_ranks = out_max_ranks.tolist()
+    in_max_ranks = in_max_ranks.tolist()
+
+    return in_max_ranks,out_max_ranks
+
 def get_ranks(max = False):
     '''
     - Read from .adas-output excel file
@@ -49,7 +68,6 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"net={GLOBALS.CONFIG['network']}_" +\
             f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
             f"adapt_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_" +\
-            f"epochpertrial={GLOBALS.CONFIG['epochs_per_trial']}_"+\
             f"beta={GLOBALS.CONFIG['beta']}_initlr=" +\
             f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
@@ -65,11 +83,11 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
         f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
         f"threshold={GLOBALS.CONFIG['adapt_rank_threshold']}_"+\
-        f"epochpertrial={GLOBALS.CONFIG['epochs_per_trial']}_"+\
         f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
         f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
     GLOBALS.EXCEL_PATH = xlsx_path
+    print(GLOBALS.EXCEL_PATH,'SET GLOBALS EXCEL PATH')
 
     for epoch in epochs:
         start_time = time.time()
@@ -101,7 +119,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             print("AdaS: Early stop activated.")
             break
 
-@Profiler
+#@Profiler
 def epoch_iteration(trial, train_loader, test_loader, epoch: int,
                     device, optimizer,scheduler) -> Tuple[float, float]:
     # logging.info(f"Adas: Train: Epoch: {epoch}")
