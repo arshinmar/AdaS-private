@@ -1,3 +1,27 @@
+'''
+(64,64,3,3)
+(54,54,3,3)
+
+take the 54 most important channels, the size of this "important channel" is (1,64,3,3)
+(54,64,3,3)
+
+POTENTIAL SOLUTIONS:
+ -- AVERAGE the 64,3,3 into a 54,3,3, retaining as much usefulness as possible.
+ -- Take the best 54 input channels and the accompanying weights
+ -----------------------------------------
+ Size of Initial Weights:(64,64,3,3) --> (out, in, kernel_size_1, kernel_size_2)
+  TO
+ Size of New Weights:  (128,128,3,3)
+
+Concatenation issues?
+
+(64,64,3,3)
+to
+(64,60,3,3)
+to
+(128,60,3,3)
+'''
+
 from models.own_network import Network, AdaptiveNet
 import torch, torchvision
 import numpy as np
@@ -166,6 +190,8 @@ def prototype(net_state_dict,new_output_sizes):
     model=AdaptiveNet(new_output_sizes=new_output_sizes)
 
     start=time.time()
+    '''for param_tensor in net_state_dict:
+        print(param_tensor, "\t", net_state_dict[param_tensor].size())'''
     for param_tensor in net_state_dict:
         if (param_tensor.find('num_batches_tracked')!=-1):
             continue
@@ -184,7 +210,9 @@ def prototype(net_state_dict,new_output_sizes):
             '''---------------------------------'''
             '''
         elif (param_tensor.find('shortcut')!=-1):
+
             final=adjust_shortcut_weights(weights,new_weights, old_output_channel_size,new_output_channel_size,param_tensor)
+
             '''
         elif (param_tensor.find('bn')!=-1):
             '''---------------------------------'''
@@ -203,7 +231,7 @@ def prototype(net_state_dict,new_output_sizes):
 def test():
     net = AdaptiveNet()
     #OLD WEIGHTS
-    '''
+    #'''
     for param_tensor in net.state_dict():
         val=param_tensor.find('conv')
         #if val==-1:
@@ -213,7 +241,7 @@ def test():
     x=torch.randn(1,3,32,32)
     model=prototype(net.state_dict(),[100,10,100,10,508])
     #NEW WEIGHTS
-    '''
+    #'''
     for param_tensor in model.state_dict():
         val=param_tensor.find('conv')
         if val==-1:
