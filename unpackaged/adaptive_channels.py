@@ -199,7 +199,7 @@ def prototype(net_state_dict,new_output_sizes):
         try:
             new_weights=model.state_dict()[param_tensor]
         except:
-            new_weights=model.state_dict()[param_tensor]
+            new_weights=model.state_dict()[param_tensor[7:]]
 
         old_output_channel_size=weights.shape[0]
         new_output_channel_size=new_weights.shape[0]
