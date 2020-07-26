@@ -206,7 +206,7 @@ def even_round(number):
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
     #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
-    threshold=0.3
+    threshold=0.4
     input_ranks_layer_1, output_ranks_layer_1 = input_ranks[0], output_ranks[0]
     input_ranks_superblock_1, output_ranks_superblock_1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
     input_ranks_superblock_2, output_ranks_superblock_2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
