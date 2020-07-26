@@ -146,7 +146,7 @@ class Network(nn.Module):
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes+self.superblock5_indexes
 
         self.num_classes=num_classes
-        self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=7, stride=2, padding=3, bias=False)
+        self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.index[0])
         self.network=self._create_network(block)
         self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
@@ -182,7 +182,7 @@ class Network(nn.Module):
         #print(x.shape, 'bn1')
         x = self.relu(x)
         #print(x.shape, 'relu')
-        x = self.maxpool(x)
+        #x = self.maxpool(x)
         ##print(x.shape, 'max pool')
         x = self.network(x)
         #print(x.shape, 'post bunch of blocks')
