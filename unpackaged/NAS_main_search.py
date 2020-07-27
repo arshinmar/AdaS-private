@@ -1,9 +1,9 @@
-
 from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 import os
 # import logging
 
+import copy
 import math
 import torch.backends.cudnn as cudnn
 import pandas as pd
@@ -25,6 +25,7 @@ import  global_vars as GLOBALS
 from adaptive_channels import prototype
 
 from adaptive_graph import create_adaptive_graphs,create_layer_plot
+from ptflops import get_model_complexity_info
 
 def args(sub_parser: _SubParsersAction):
     # print("\n---------------------------------")
@@ -184,9 +185,9 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
     print(new_conv_sizes,'NEW CONV SIZES')
     return new_conv_sizes
 
-def create_graphs(accuracy_data_file_name,conv_data_file_name):
-    create_adaptive_graphs(accuracy_data_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'])
-    #create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'])
+def create_graphs(accuracy_data_file_name,conv_data_file_name,out_folder):
+    create_adaptive_graphs(accuracy_data_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
+    create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],out_folder)
     return True
 
 '''
@@ -203,10 +204,10 @@ output_conv_size_list = 33-long list
 def even_round(number):
     return int(round(number/2)*2)
 
-def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes):
+def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
     #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
-    threshold=0.25
+
     input_ranks_layer_1, output_ranks_layer_1 = input_ranks[0], output_ranks[0]
     input_ranks_superblock_1, output_ranks_superblock_1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
     input_ranks_superblock_2, output_ranks_superblock_2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
@@ -241,9 +242,8 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         block_averages_output[i]=block_averages_output[i]+[np.average(np.array(grey_list_output[i]))]
         block_averages[i]=np.average(np.array([block_averages_input[i],block_averages_output[i]]),axis=0)
 
-    print(block_averages, 'BLOCK AVERAGES')
     print(conv_size_list,'CONV SIZE LIST')
-    output_conv_size_list=list(conv_size_list)
+    output_conv_size_list=copy.deepcopy(conv_size_list)
     for i in range(0,len(block_averages)):
         for j in range(0,len(conv_size_list[i])):
             if (i==0):
@@ -286,24 +286,70 @@ def update_network(output_sizes):
     new_network.load_state_dict(new_model_state_dict)
     return new_network
 
+def create_data_file(new_network,full_save_file,full_fresh_file,output_path_string_full_train):
+    parameter_data = pd.DataFrame(columns=['Accuracy (%)','Training Loss','GMacs','GFlops','Parameter Count (M)'])
+
+    full_save_dfs=pd.read_excel(full_save_file)
+    full_fresh_dfs=pd.read_excel(full_fresh_file)
+
+    final_epoch_save=full_save_dfs.columns[-1][(full_save_dfs.columns[-1].index('epoch_')+6):]
+    final_epoch_fresh=full_fresh_dfs.columns[-1][(full_fresh_dfs.columns[-1].index('epoch_')+6):]
+
+    full_save_accuracy = full_save_dfs['test_acc_epoch_'+str(final_epoch_save)][0]*100
+    full_fresh_accuracy = full_fresh_dfs['test_acc_epoch_'+str(final_epoch_fresh)][0]*100
+    full_save_loss = full_save_dfs['train_loss_epoch_'+str(final_epoch_save)][0]
+    full_fresh_loss = full_fresh_dfs['train_loss_epoch_'+str(final_epoch_fresh)][0]
+
+    macs, params = get_model_complexity_info(new_network, (3,32,32), as_strings=False,print_per_layer_stat=False, verbose=True)
+
+    save_parameter_size_list = [full_save_accuracy,full_save_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
+    fresh_parameter_size_list = [full_fresh_accuracy,full_fresh_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
+    parameter_data.loc[len(parameter_data)] = save_parameter_size_list
+    parameter_data.loc[len(parameter_data)] = fresh_parameter_size_list
+    parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+
+    return True
+
 if __name__ == '__main__':
 
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args = parser.parse_args()
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args)
+    output_path = output_path / f"conv_{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}_epochpert={GLOBALS.CONFIG['epochs_per_trial']}_adaptnum={GLOBALS.CONFIG['adapt_trials']}"
+    GLOBALS.OUTPUT_PATH_STRING = str(output_path)
+
+    if not os.path.exists(GLOBALS.OUTPUT_PATH_STRING):
+        os.mkdir(GLOBALS.OUTPUT_PATH_STRING)
+
     print('~~~Initialization Complete. Beginning first training~~~')
 
     epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+    #conv_data = pd.Series(index=['superblock1','superblock2','superblock3','superblock4','superblock5'])
 
-    #conv_data.loc[len(conv_data)] = starting_conv_sizes
-    output_path_string = str(output_path) +'\\'+ GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])
-    output_path_train = output_path / f"{GLOBALS.CONFIG['init_conv_setting']}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}"
+    conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
+    conv_data.loc[0] = conv_size_list
 
-    if not os.path.exists(output_path_string):
-        os.mkdir(output_path_string)
+    output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'Trials'
+    output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'model_weights'
+    output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'graph_files'
+    output_path_string_full_train = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'full_train'
+    output_path_train = output_path / f"Trials"
+    output_path_fulltrain = output_path / f"full_train"
+
+    if not os.path.exists(output_path_string_trials):
+        os.mkdir(output_path_string_trials)
+
+    if not os.path.exists(output_path_string_modelweights):
+        os.mkdir(output_path_string_modelweights)
+
+    if not os.path.exists(output_path_string_graph_files):
+        os.mkdir(output_path_string_graph_files)
+
+    if not os.path.exists(output_path_string_full_train):
+        os.mkdir(output_path_string_full_train)
 
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path_train)
@@ -314,11 +360,11 @@ if __name__ == '__main__':
 
         input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
         shortcut_indexes=[7,14,21,28]
-        conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
-        index_conv_size_list=GLOBALS.index
-        output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes)
 
-        conv_data.loc[len(conv_data)] = output_sizes
+        index_conv_size_list=GLOBALS.index
+        output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])
+        conv_size_list=copy.deepcopy(output_sizes)
+        conv_data.loc[i] = output_sizes
 
         print('~~~Starting Conv Adjustments~~~')
         new_network=update_network(output_sizes)
@@ -339,19 +385,17 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK')
         break;
 
-    conv_data.to_excel(str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
-    #create_graphs(GLOBALS.EXCEL_PATH,str(output_path_train)+'\\'+'adapted_architectures_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'.xlsx')
-    torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
+    #parameter_data.to_excel(output_path_string_trials+'\\'+'adapted_parameters.xlsx')
+    conv_data.to_excel(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_graph_files)
+    torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
     print('done')
 
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
     GLOBALS.CONFIG['beta'] = 0.95
-    output_path_string = str(output_path) +'\\'+'full_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_full = output_path / f"full_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
-
-    if not os.path.exists(output_path_string):
-        os.mkdir(output_path_string)
+    GLOBALS.FULL_TRAIN = True
+    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
 
     new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
@@ -375,19 +419,11 @@ if __name__ == '__main__':
         break;
 
     epochs = range(0,250)
-    run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_full)
+    run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
 
-    '---------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
+    '--------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
 
-    output_path_string = str(output_path) +'\\'+'fresh_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_fresh = output_path / f"fresh_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
-
-    print(output_path_string)
-    print(output_path_fresh)
-    if not os.path.exists(output_path_string):
-        os.mkdir(output_path_string)
-        print('made directory')
-
+    GLOBALS.FULL_TRAIN_MODE = 'fresh'
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
@@ -410,8 +446,12 @@ if __name__ == '__main__':
 
     epochs = range(0,250)
 
-    run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fresh)
+    run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
 
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
-
+    #parameter count for fresh, full train
+    #Parameters, macs, flops, accuracy, training loss
+    create_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+                                 output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+                                 output_path_string_full_train)
     print('Done')
