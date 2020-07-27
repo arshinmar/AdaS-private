@@ -242,7 +242,6 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         block_averages_output[i]=block_averages_output[i]+[np.average(np.array(grey_list_output[i]))]
         block_averages[i]=np.average(np.array([block_averages_input[i],block_averages_output[i]]),axis=0)
 
-    print(block_averages, 'BLOCK AVERAGES')
     print(conv_size_list,'CONV SIZE LIST')
     output_conv_size_list=copy.deepcopy(conv_size_list)
     for i in range(0,len(block_averages)):
@@ -332,14 +331,7 @@ if __name__ == '__main__':
 
     conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
     conv_data.loc[0] = conv_size_list
-    '''
-    output_copy=list(conv_size_list)
-    conv_data.loc[0] = output_copy#pd.Series(conv_size_list,index=conv_data.columns)
-    #conv_data=pd.concat([conv_data,pd.Series(conv_size_list)])
-    print('CONV DATA:')
-    print(conv_data)
-    #('CONV DATA:')
-    '''
+
     output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'Trials'
     output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'model_weights'
     output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'graph_files'
@@ -374,9 +366,6 @@ if __name__ == '__main__':
         conv_size_list=copy.deepcopy(output_sizes)
         conv_data.loc[i] = output_sizes
 
-        print('CONV DATA in FOR LOOP, ITERATION '+str(i)+' :')
-        print(conv_data)
-
         print('~~~Starting Conv Adjustments~~~')
         new_network=update_network(output_sizes)
         optimizer,scheduler=network_initialize(new_network)
@@ -407,13 +396,7 @@ if __name__ == '__main__':
     GLOBALS.CONFIG['beta'] = 0.95
     GLOBALS.FULL_TRAIN = True
     GLOBALS.FULL_TRAIN_MODE = 'last_trial'
-    '''
-    output_path_string = output_path_string_full_train +'\\'+'dynamicfull_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_full = output_path_fulltrain / f"dynamicfull_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
-    if not os.path.exists(output_path_string):
-        os.mkdir(output_path_string)
-    '''
     new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
@@ -435,20 +418,11 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK FULL TRAIN')
         break;
 
-    epochs = range(0,2)
+    epochs = range(0,250)
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
 
     '--------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
-    '''
-    output_path_string = str(output_path) +'\\'+'redodynamicfresh_conv='+str(GLOBALS.super1_idx[0])+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    output_path_fresh = output_path / f"redodynamicfresh_conv={GLOBALS.super1_idx[0]}_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_beta={GLOBALS.CONFIG['beta']}"
 
-    print(output_path_string)
-    print(output_path_fresh)
-    if not os.path.exists(output_path_string):
-        os.mkdir(output_path_string)
-        print('made directory')
-    '''
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
@@ -470,7 +444,7 @@ if __name__ == '__main__':
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
         break;
 
-    epochs = range(0,2)
+    epochs = range(0,250)
 
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
 
