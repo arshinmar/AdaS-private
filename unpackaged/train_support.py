@@ -7,7 +7,7 @@ from AdaS import AdaS
 from test import test_main
 from optim.sls import SLS
 from optim.sps import SPS
-
+import sys
 def get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH):
     '''
     -returns 2 36-lists of the maximum value of the input and output ranks from the datafile produced after one adapting trial
@@ -63,14 +63,28 @@ def get_ranks(max = False):
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
-        xlsx_name = \
-            f"AdaS_adapt_trial={trial}_" +\
-            f"net={GLOBALS.CONFIG['network']}_" +\
-            f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
-            f"adapt_thresh={GLOBALS.CONFIG['adapt_rank_threshold']}_" +\
-            f"beta={GLOBALS.CONFIG['beta']}_initlr=" +\
-            f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
-            f"{GLOBALS.CONFIG['dataset']}.xlsx"
+        if GLOBALS.FULL_TRAIN == False:
+            xlsx_name = \
+                f"AdaS_adapt_trial={trial}_" +\
+                f"net={GLOBALS.CONFIG['network']}_" +\
+                f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
+                f"{GLOBALS.CONFIG['dataset']}.xlsx"
+        else:
+            if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
+                xlsx_name = \
+                    f"AdaS_last_iter_fulltrain_trial={trial}_" +\
+                    f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"dataset=" +\
+                    f"{GLOBALS.CONFIG['dataset']}.xlsx"
+            elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
+                xlsx_name = \
+                    f"AdaS_fresh_fulltrain_trial={trial}_" +\
+                    f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"dataset=" +\
+                    f"{GLOBALS.CONFIG['dataset']}.xlsx"
+            else:
+                print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
+                sys.exit()
     else:
         xlsx_name = \
             f"{GLOBALS.CONFIG['optim_method']}_" +\
@@ -81,8 +95,6 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     xlsx_path = str(output_path) +'\\'+ xlsx_name
     filename = \
         f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
-        f"convs={GLOBALS.CONFIG['init_conv_setting']}_" +\
-        f"threshold={GLOBALS.CONFIG['adapt_rank_threshold']}_"+\
         f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
         f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename

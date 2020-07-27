@@ -124,11 +124,11 @@ class Network(nn.Module):
         self.shortcut_3_index = 21 #Number on excel corresponding to shortcut 2
         self.shortcut_4_index = 28
         ####################### O% ########################
-        self.superblock1_indexes=[64, 64, 64, 64, 64, 64, 64]
-        self.superblock2_indexes=[64, 64, 64, 64, 64, 64]
-        self.superblock3_indexes=[64, 64, 64, 64, 64, 64]
-        self.superblock4_indexes=[64, 64, 64, 64, 64, 64]
-        self.superblock5_indexes=[64, 64, 64, 64, 64, 64]
+        self.superblock1_indexes=[32,32,32,32,32,32,32]
+        self.superblock2_indexes=[32,32,32,32,32,32]
+        self.superblock3_indexes=[32,32,32,32,32,32]
+        self.superblock4_indexes=[32,32,32,32,32,32]
+        self.superblock5_indexes=[32,32,32,32,32,32]
 
         #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
@@ -210,8 +210,8 @@ def test():
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
     #print(net)
-    g=make_dot(y)
-    g.view()
+    #g=make_dot(y)
+    #g.view()
     '''
 
     #g.view()
