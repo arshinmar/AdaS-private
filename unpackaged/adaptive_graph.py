@@ -2,6 +2,8 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 import global_vars as GLOBALS
+import ast
+
 def compile_adaptive_files(file_name,num_trials):
     #CHANGE THIS VALUE FOR NUMBER OF TRIALS
     num_trials=num_trials
@@ -37,19 +39,42 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials):
     plt.xticks(np.arange(min(epoch_num), max(epoch_num)+1, total_num_epochs))
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
-    plt.savefig('graph_files/accuracy_plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])+'.png',bbox_inches='tight')
-    #plt.show()
+    #plt.title('AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
+    #plt.savefig('graph_files/accuracy_plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])+'.png',bbox_inches='tight')
+    plt.show()
 
 #create_adaptive_graphs()
 
+def remove_brackets(value):
+    check=']'
+    val=''
+    for i in range(0,len(value),1):
+        if i==len(value)-1:
+            val+=']'
+            break
+        if value[i]==check:
+            if check==']':
+                check='['
+                if value[i+1]==check:
+                    val+=', '
+                    i+=2
+            else:
+                check=']'
+        else:
+            val+=value[i]
+    return val
+
 def create_layer_plot(file_name,num_trials):
     layers_info=pd.read_excel(file_name)
-    layers_size_list=[[]]
+    layers_size_list=[]
 
     for i in range(len(layers_info.iloc[:,0].to_numpy())):
+        temp=''
         main=layers_info.iloc[i,1:].to_numpy()
-        layers_size_list+=[main]
+        for i in main:
+            temp+=i[:]
+        temp=ast.literal_eval(remove_brackets(temp))
+        layers_size_list+=[temp]
 
     barWidth=0.5
     layers_list=[[]]
@@ -75,13 +100,13 @@ def create_layer_plot(file_name,num_trials):
     plt.ylabel('Layer Size',fontweight='bold')
     plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
     if num_trials<=10:
-        plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
+        plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
-        plt.xticks([mult_val*r + temp_val*barWidth + 6 + num_trials*0.3 for r in range(len(layers_size_list[0]))], [str(i) for i in range(len(layers_size_list[0]))])
+        plt.xticks([mult_val*r + temp_val*barWidth + 6 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
 
     plt.legend(loc='upper right')
     figure=plt.gcf()
-    figure.set_size_inches(25, 9)
-    plt.savefig('graph_files/Layer_Size_Plot_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])+'.png',bbox_inches='tight')
-
+    figure.set_size_inches(11.4, 5.34)
+    addition=str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    plt.savefig('graph_files/Layer_Size_Plot_thresh='+addition+'.png',bbox_inches='tight')
     return True

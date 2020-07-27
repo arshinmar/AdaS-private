@@ -29,6 +29,7 @@ Reference:
 [1] Kaiming He, x iangyu Zhang, Shaoqing Ren, Jian Sun
     Deep Residual Learning for Image Recognition. arx iv:1512.03385
 """
+import sys, os
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
@@ -46,6 +47,14 @@ import torchvision.models as models
 
 import torch.onnx
 from ptflops import get_model_complexity_info
+
+# Disable
+def blockPrint():
+    sys.stdout = open(os.devnull, 'w')
+
+# Restore
+def enablePrint():
+    sys.stdout = sys.__stdout__
 
 class BasicBlock(nn.Module):
 
@@ -211,13 +220,15 @@ def test():
     print(y.size())
 
     macs, params = get_model_complexity_info(net, (3,32,32), as_strings=True,
-                                           print_per_layer_stat=True, verbose=True)
+                                           print_per_layer_stat=False, verbose=True)
     print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
+    #print(type(macs))
+    #print(int(macs))
 
     #print(net)
-    g=make_dot(y)
-    g.view()
+    #g=make_dot(y)
+    #g.view()
     '''
 
     #g.view()
