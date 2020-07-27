@@ -12,7 +12,7 @@ init_lr: 0.1
 
 adapt_trials: 10
 init_conv_setting: '64,64,64,64,64'
-adapt_rank_threshold: 0.3
+adapt_rank_threshold: 0.2
 epochs_per_trial: 20
 
 ###### Suggested Default ######
