@@ -93,10 +93,23 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             f"net={GLOBALS.CONFIG['network']}_dataset=" +\
             f"{GLOBALS.CONFIG['dataset']}.xlsx"
     xlsx_path = str(output_path) +'\\'+ xlsx_name
-    filename = \
-        f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
-        f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
-        f"dataset={GLOBALS.CONFIG['dataset']}.csv"
+    
+    if GLOBALS.FULL_TRAIN == False:
+        filename = \
+            f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+            f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
+            f"dataset={GLOBALS.CONFIG['dataset']}.csv"
+    else:
+        if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
+            filename = \
+                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+                f"beta={GLOBALS.CONFIG['beta']}_" +\
+                f"dataset={GLOBALS.CONFIG['dataset']}.csv"
+        elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
+            filename = \
+                f"stats_fresh_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+                f"beta={GLOBALS.CONFIG['beta']}_" +\
+                f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
     GLOBALS.EXCEL_PATH = xlsx_path
     print(GLOBALS.EXCEL_PATH,'SET GLOBALS EXCEL PATH')

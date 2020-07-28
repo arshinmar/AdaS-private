@@ -396,7 +396,7 @@ if __name__ == '__main__':
     GLOBALS.CONFIG['beta'] = 0.95
     GLOBALS.FULL_TRAIN = True
     GLOBALS.FULL_TRAIN_MODE = 'last_trial'
-
+    GLOBALS.PERFORMANCE_STATISTICS = {}
     new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
@@ -422,8 +422,9 @@ if __name__ == '__main__':
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
 
     '--------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
-
+    GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
+    GLOBALS.EXCEL_PATH = ''
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
