@@ -422,8 +422,12 @@ if __name__ == '__main__':
     '''
     '--------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
     GLOBALS.PERFORMANCE_STATISTICS = {}
+    GLOBALS.FULL_TRAIN = True
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
     GLOBALS.EXCEL_PATH = ''
+    GLOBALS.CONFIG['beta'] = 0.95
+
+
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=None)
@@ -451,7 +455,7 @@ if __name__ == '__main__':
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
     #parameter count for fresh, full train
     #Parameters, macs, flops, accuracy, training loss
-    '''create_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+    create_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
-                                 output_path_string_full_train)'''
+                                 output_path_string_full_train)
     print('Done')
