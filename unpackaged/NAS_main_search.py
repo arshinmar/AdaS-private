@@ -350,7 +350,7 @@ if __name__ == '__main__':
 
     if not os.path.exists(output_path_string_full_train):
         os.mkdir(output_path_string_full_train)
-
+    '''
     run_epochs(0, epochs, train_loader, test_loader,
                            device, optimizer, scheduler, output_path_train)
 
@@ -391,7 +391,6 @@ if __name__ == '__main__':
     torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
     print('done')
-
     '---------------------------------------------------------------------------- LAST TRIAL FULL TRAIN ----------------------------------------------------------------------------------'
     GLOBALS.CONFIG['beta'] = 0.95
     GLOBALS.FULL_TRAIN = True
@@ -420,14 +419,14 @@ if __name__ == '__main__':
 
     epochs = range(0,250)
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
-
+    '''
     '--------------------------------------------------------------------------- FRESH NETWORK FULL TRAIN ----------------------------------------------------------------------------------'
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
     GLOBALS.EXCEL_PATH = ''
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
+    new_network=AdaptiveNet(num_classes=10,new_output_sizes=None)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
 
     optimizer,scheduler=network_initialize(new_network)
@@ -452,7 +451,7 @@ if __name__ == '__main__':
     '----------------------------------------------------------------------------===========================----------------------------------------------------------------------------------'
     #parameter count for fresh, full train
     #Parameters, macs, flops, accuracy, training loss
-    create_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+    '''create_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
-                                 output_path_string_full_train)
+                                 output_path_string_full_train)'''
     print('Done')

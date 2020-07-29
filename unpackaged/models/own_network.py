@@ -124,17 +124,17 @@ class Network(nn.Module):
         self.shortcut_3_index = 21 #Number on excel corresponding to shortcut 2
         self.shortcut_4_index = 28
         ####################### O% ########################
-        self.superblock1_indexes=[96,96,96,96,96,96,96]
+        '''self.superblock1_indexes=[96,96,96,96,96,96,96]
         self.superblock2_indexes=[96,96,96,96,96,96]
         self.superblock3_indexes=[96,96,96,96,96,96]
         self.superblock4_indexes=[96,96,96,96,96,96]
-        self.superblock5_indexes=[96,96,96,96,96,96]
+        self.superblock5_indexes=[96,96,96,96,96,96]'''
 
-        #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
-        #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
-        #self.superblock3_indexes=[256, 256, 64, 64, 64, 64]
-        #self.superblock4_indexes=[64, 64, 64, 64, 64, 64]
-        #self.superblock5_indexes=[64, 64, 64, 64, 64, 64]
+        self.superblock1_indexes=[244, 476, 244, 188, 244, 148, 244]
+        self.superblock2_indexes=[132, 194, 270, 194, 166, 194]
+        self.superblock3_indexes=[162, 284, 450, 284, 282, 284]
+        self.superblock4_indexes=[182, 176, 314, 176, 78, 176]
+        self.superblock5_indexes=[116, 78, 58, 78, 74, 78]
 
         if new_output_sizes!=None:
             self.superblock1_indexes=new_output_sizes[0]
