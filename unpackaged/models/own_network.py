@@ -120,17 +120,17 @@ class Network(nn.Module):
 
         ################################################################################## AdaS ##################################################################################
         ####################### O% ########################
-        '''self.superblock1_indexes=[96,96,96,96,96,96,96]
+        self.superblock1_indexes=[96,96,96,96,96,96,96]
         self.superblock2_indexes=[96,96,96,96,96,96]
         self.superblock3_indexes=[96,96,96,96,96,96]
         self.superblock4_indexes=[96,96,96,96,96,96]
-        self.superblock5_indexes=[96,96,96,96,96,96]'''
+        self.superblock5_indexes=[96,96,96,96,96,96]
 
-        self.superblock1_indexes=[244, 476, 244, 188, 244, 148, 244]
+        '''self.superblock1_indexes=[244, 476, 244, 188, 244, 148, 244]
         self.superblock2_indexes=[132, 194, 270, 194, 166, 194]
         self.superblock3_indexes=[162, 284, 450, 284, 282, 284]
         self.superblock4_indexes=[182, 176, 314, 176, 78, 176]
-        self.superblock5_indexes=[116, 78, 58, 78, 74, 78]
+        self.superblock5_indexes=[116, 78, 58, 78, 74, 78]'''
 
         self.shortcut_1_index = len(self.superblock1_indexes) #Number on excel corresponding to shortcut 1
         self.shortcut_2_index = self.shortcut_1_index + len(self.superblock2_indexes) + 1 #Number on excel corresponding to shortcut 2
