@@ -123,10 +123,10 @@ class ResNet(nn.Module):
         self.shortcut_2_index = 16 #Number on excel corresponding to shortcut 2
         self.shortcut_3_index = 29 #Number on excel corresponding to shortcut 2
         ####################### O% ########################
-        '''self.superblock1_indexes=[64, 64, 64, 64, 64, 64, 64]
+        self.superblock1_indexes=[64, 64, 64, 64, 64, 64, 64]
         self.superblock2_indexes=[128, 128, 128, 128, 128, 128, 128, 128]
         self.superblock3_indexes=[256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
-        self.superblock4_indexes=[512, 512, 512, 512, 512, 512]'''
+        self.superblock4_indexes=[512, 512, 512, 512, 512, 512]
         ####################### 20% #######################
         '''self.superblock1_indexes=[58, 58, 58, 58, 58, 60, 58]
         self.superblock2_indexes=[110, 114, 114, 114, 118, 114, 118, 114]
@@ -148,10 +148,10 @@ class ResNet(nn.Module):
         self.superblock3_indexes=[104, 132, 138, 132, 148, 132, 148, 132, 144, 132, 140, 132]
         self.superblock4_indexes=[196, 158, 162, 158, 136, 158]'''
         ####################### 100% #######################
-        self.superblock1_indexes=[38, 38, 38, 36, 38, 40, 38]
+        '''self.superblock1_indexes=[38, 38, 38, 36, 38, 40, 38]
         self.superblock2_indexes=[36, 54, 62, 54, 74, 54, 76, 54]
         self.superblock3_indexes=[66, 102, 108, 102, 120, 102, 120, 102, 116, 102, 112, 102]
-        self.superblock4_indexes=[116, 70, 74, 70, 42, 70]
+        self.superblock4_indexes=[116, 70, 74, 70, 42, 70]'''
 
         if index!=None:
             self.superblock1_indexes=index[0]
@@ -162,10 +162,10 @@ class ResNet(nn.Module):
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
 
         self.num_classes=num_classes
-        self.conv1 = nn.Conv2d(image_channels, self.index [0], kernel_size=7, stride=2, padding=3)
+        self.conv1 = nn.Conv2d(image_channels, self.index [0], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.index[0])
         self.network=self._create_network(block)
-        self.linear=nn.Linear(self.index[len(self.index )-1],num_classes)
+        self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.maxpool=nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.relu=nn.ReLU()
@@ -197,7 +197,7 @@ class ResNet(nn.Module):
         #print(x.shape, 'bn1')
         x = self.relu(x)
         #print(x.shape, 'relu')
-        x = self.maxpool(x)
+        #x = self.maxpool(x)
         ##print(x.shape, 'max pool')
         x = self.network(x)
         #print(x.shape, 'post bunch of blocks')
@@ -251,4 +251,4 @@ def test():
     torch.onnx.export(net, dummy_input, "model.onnx")
     '''
 
-#test()
+test()
