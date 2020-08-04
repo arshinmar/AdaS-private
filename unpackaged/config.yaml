@@ -15,7 +15,7 @@ init_conv_setting: '64,64,64,64,64'
 adapt_rank_threshold: 0.4
 epochs_per_trial: 20
 
-delta_threshold: 0.3
+delta_threshold: 0.4
 min_scale_limit: 0.01
 
 ###### Suggested Default ######
