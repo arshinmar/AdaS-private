@@ -352,7 +352,6 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         delta_info.loc[i] = [delta_percentage_copy,factor_scale_copy,last_operation_copy]
         print('~~~Starting Conv Adjustments~~~')
         new_network=update_network(output_sizes)
-        #optimizer,scheduler=network_initialize(new_network,train_loader)
 
         print('~~~Initializing the new model~~~')
         parser = ArgumentParser(description=__doc__)
