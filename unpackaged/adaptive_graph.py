@@ -8,8 +8,14 @@ def compile_adaptive_files(file_name,num_trials):
     num_trials=num_trials
     adaptive_set=[]
     manipulate_index=file_name.find('trial')+6
+    try:
+        blah=int(file_name[manipulate_index+1])
+        shift=2
+    except:
+        shift=1
     for trial_num in range (0,num_trials):
-        adaptive_set.append(file_name[0:manipulate_index]+str(trial_num)+file_name[manipulate_index+1:])
+        adaptive_set.append(file_name[0:manipulate_index]+str(trial_num)+file_name[manipulate_index+shift:])
+
     return adaptive_set
 
 def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
@@ -63,7 +69,7 @@ def remove_brackets(value):
             val+=value[i]
     return val
 
-def create_layer_plot(file_name,num_trials,out_folder):
+def create_layer_plot(file_name,num_trials,path,evo_type):
     layers_info=pd.read_excel(file_name)
     layers_size_list=[]
 
@@ -90,14 +96,14 @@ def create_layer_plot(file_name,num_trials,out_folder):
         temp=[x + barWidth for x in layers_list[i-1]]
         layers_list+=[temp]
 
-    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
+    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
     plt.figure()
     for i in range(0,len(layers_list),1):
         plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=barWidth, edgecolor='white',label=str('Trial '+str(i+1)))
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet: Evolution of Layer Size Vs Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
+    plt.title('AdaptiveNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
     if num_trials<=10:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
@@ -107,5 +113,5 @@ def create_layer_plot(file_name,num_trials,out_folder):
     figure=plt.gcf()
     figure.set_size_inches(11.4, 5.34)
     #addition=str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])
-    plt.savefig(out_folder+'\\'+'dynamic_layer_Size_Plot.png',bbox_inches='tight')
+    plt.savefig(path,bbox_inches='tight')
     return True
