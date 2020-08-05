@@ -45,7 +45,7 @@ def get_ranks(path = GLOBALS.EXCEL_PATH, epoch_number = -1):
 def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shortcut_indexes,last_operation,factor_scale,delta_percentage):
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
     input_ranks_final,output_ranks_final = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=-1)
-    input_ranks_stable,output_ranks_stable = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=4)
+    input_ranks_stable,output_ranks_stable = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
 
     rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
     rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
@@ -69,7 +69,7 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
 
             current_operation = EXPAND if delta_percentage[superblock][layer] >= delta_threshold else SHRINK
 
-            if (last_operation[superblock][layer] != current_operation and FIRST_TIME==True):
+            if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
                 if (factor_scale[superblock][layer] < min_scale_limit):
                     current_operation = STOP
                 factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
