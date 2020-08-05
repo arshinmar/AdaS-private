@@ -226,22 +226,22 @@ def update_network(output_sizes):
 def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path_string_full_train):
     parameter_data = pd.DataFrame(columns=['Accuracy (%)','Training Loss','GMacs','GFlops','Parameter Count (M)'])
 
-    full_save_dfs=pd.read_excel(full_save_file)
+    #full_save_dfs=pd.read_excel(full_save_file)
     full_fresh_dfs=pd.read_excel(full_fresh_file)
 
-    final_epoch_save=full_save_dfs.columns[-1][(full_save_dfs.columns[-1].index('epoch_')+6):]
+    #final_epoch_save=full_save_dfs.columns[-1][(full_save_dfs.columns[-1].index('epoch_')+6):]
     final_epoch_fresh=full_fresh_dfs.columns[-1][(full_fresh_dfs.columns[-1].index('epoch_')+6):]
 
-    full_save_accuracy = full_save_dfs['test_acc_epoch_'+str(final_epoch_save)][0]*100
+    #full_save_accuracy = full_save_dfs['test_acc_epoch_'+str(final_epoch_save)][0]*100
     full_fresh_accuracy = full_fresh_dfs['test_acc_epoch_'+str(final_epoch_fresh)][0]*100
-    full_save_loss = full_save_dfs['train_loss_epoch_'+str(final_epoch_save)][0]
+    #full_save_loss = full_save_dfs['train_loss_epoch_'+str(final_epoch_save)][0]
     full_fresh_loss = full_fresh_dfs['train_loss_epoch_'+str(final_epoch_fresh)][0]
 
     macs, params = get_model_complexity_info(new_network, (3,32,32), as_strings=False,print_per_layer_stat=False, verbose=True)
 
-    save_parameter_size_list = [full_save_accuracy,full_save_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
+    #save_parameter_size_list = [full_save_accuracy,full_save_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
     fresh_parameter_size_list = [full_fresh_accuracy,full_fresh_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
-    parameter_data.loc[len(parameter_data)] = save_parameter_size_list
+    #parameter_data.loc[len(parameter_data)] = save_parameter_size_list
     parameter_data.loc[len(parameter_data)] = fresh_parameter_size_list
     parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
 
@@ -287,7 +287,11 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
 
-    optimizer,scheduler=network_initialize(new_network,train_loader)
+    #optimizer,scheduler=network_initialize(new_network,train_loader)
+    parser = ArgumentParser(description=__doc__)
+    args(parser)
+    args_true = parser.parse_args()
+    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
 
     print('Using Early stopping of thresh 0.001')
     GLOBALS.EARLY_STOP = EarlyStop(

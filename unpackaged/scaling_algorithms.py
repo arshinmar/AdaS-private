@@ -69,7 +69,7 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
 
             current_operation = EXPAND if delta_percentage[superblock][layer] >= delta_threshold else SHRINK
 
-            if (last_operation[superblock][layer] != current_operation and FIRST_TIME==True):
+            if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
                 if (factor_scale[superblock][layer] < min_scale_limit):
                     current_operation = STOP
                 factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
