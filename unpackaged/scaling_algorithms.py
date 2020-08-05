@@ -12,7 +12,7 @@ from optim import get_optimizer_scheduler
 from early_stop import EarlyStop
 import sys
 from adaptive_channels import prototype
-from adaptive_graph import create_adaptive_graphs,create_layer_plot
+from adaptive_graph import create_adaptive_graphs,create_layer_plot,calculate_slopes,adaptive_stop,slope
 from ptflops import get_model_complexity_info
 from models.own_network import AdaptiveNet
 import copy
@@ -46,7 +46,6 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
     input_ranks_final,output_ranks_final = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     input_ranks_stable,output_ranks_stable = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
-
     rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
     rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
 
@@ -55,17 +54,32 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
 
     FIRST_TIME=False
 
+    slope_averages=[]
     if last_operation==[]:
         FIRST_TIME = True
         for i in conv_size_list:
             factor_scale.append([0.1]*len(i))
             last_operation.append([1]*len(i))
             delta_percentage.append([0]*len(i))
+            slope_averages.append([0.1]*len(i))
+
     for superblock in range(len(new_channel_sizes)):
         for layer in range(0,len(new_channel_sizes[superblock])):
             if (last_operation[superblock][layer] == STOP):
                 continue
-            delta_percentage[superblock][layer] = round((rank_averages_final[superblock][layer]-rank_averages_stable[superblock][layer])/rank_averages_final[superblock][layer],5)
+            #delta_percentage[superblock][layer] = round((rank_averages_final[superblock][layer]-rank_averages_stable[superblock][layer])/rank_averages_final[superblock][layer],5)
+            epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
+            yaxis=[]
+            for k in range(GLOBALS.CONFIG['epochs_per_trial']):
+                input_ranks,output_ranks=get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=k)
+                rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+                yaxis+=[rank_averages[superblock][layer]]
+            break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
+            slope_averages[superblock][layer] = slope(yaxis,break_point)
+            delta_percentage[superblock][layer] = slope_averages[superblock][layer]
+
+            #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
+            print(delta_percentage, 'SLOPES')
 
             current_operation = EXPAND if delta_percentage[superblock][layer] >= delta_threshold else SHRINK
 

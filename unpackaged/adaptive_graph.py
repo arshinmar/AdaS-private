@@ -1,9 +1,11 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
+from scipy.optimize import curve_fit
 import global_vars as GLOBALS
 import ast
 import copy
+import time
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
     #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
@@ -225,18 +227,94 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
 def even_round(number):
     return int(round(number/2)*2)
 
-def rank_line_graph(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
-    layer_num,superblock=0,0
+
+
+''' [[slope=1, slope=23,slope=1, slope=23,slope=1, slope=23],[slope=1, slope=23,slope=1, slope=23,slope=1, slope=23],.....] '''
+
+
+def adaptive_stop(x_data,y_data,threshold_min,epoch_wait):
+    '''From the wth epoch, If there is an increase of x in any of the next y epochs, keep going.
+    If not, make the value at the wth epoch the max'''
+    ranks=[0.1,0.2,0.3,0.4,0.5]
+    condition=False
+    for i in range(0,len(x_data)-epoch_wait,1):
+        condition=False
+        for j in range(i+1,epoch_wait+i+1,1):
+            if ((y_data[j]-y_data[i])>threshold_min):
+                condition=True
+                break
+        if condition==False:
+            return i
+        '''if condition==True:
+            #final_vals=[(i,y_data[i]) for i in x_data[-epoch_wait:]]
+            #final_vals=final_vals.sort(key=lambda tup: tup[1])
+            #return final_vals[-1][0]
+            return len(x_data)-1'''
+    return len(x_data)-1
+
+
+def slope(y_data,breakpoint):
+    return (y_data[int(breakpoint)]-y_data[GLOBALS.CONFIG['stable_epoch']])/(breakpoint-GLOBALS.CONFIG['stable_epoch'])
+
+def our_fit(x_data,y_data):
+    def func(x, a, b, c):
+        return a - (a-b) * np.exp(-c * x)
+    popt, pcov = curve_fit(func, x_data, y_data)
+    return x_data, func(x_data,*popt)
+
+
+def calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
+    start=time.time()
+    slope_averages=[]
+    for i in conv_size_list:
+        slope_averages.append([0.1]*len(i))
+
+    epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
+    for superblock in range (0,len(conv_size_list),1):
+        for layer_num in range (0,len(conv_size_list[superblock]),1):
+            yaxis=[]
+            for k in range(GLOBALS.CONFIG['epochs_per_trial']):
+                input_ranks,output_ranks=get_ranks(path=path,epoch_number=k)
+                rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+                yaxis+=[rank_averages[superblock][layer_num]]
+
+            #print(yaxis,'yaxis')
+            break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
+            #print(break_point,'breakpoint')
+
+            slope_averages[superblock][layer_num] = slope(yaxis,break_point)
+            #print(slope_averages,'SLOPE AVERAGES')
+    end=time.time()
+    print(end-start,'TIME ELAPSED FOR CSL')
+    return slope_averages
+
+def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
+    superblock=0
+    layer=0
+    epoch_num=[i for i in range(20)]
     yaxis=[]
-    for i in range(25):
-        input_ranks,output_ranks=get_ranks(path=path,epoch_number=i)
+    for k in range(20):
+        input_ranks,output_ranks=get_ranks(path=path,epoch_number=k)
         rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
-        yaxis+=[rank_averages[superblock][layer_num]]
-    epoch_num=[i for i in range(25)]
+        yaxis+=[rank_averages[superblock][layer]]
+
+    print(yaxis,'YAXIS VALUES')
+    break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
+
     fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
+    fig=plt.axvline(x=break_point)
+
+    #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
+    #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
+    print(slope(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
     plt.show()
     return True
-
-#shortcut_indexes=[7,14,21,28]
-#conv_size_list=[[32, 32, 32, 32, 32, 32, 32],[32, 32, 32, 32, 32, 32],[32, 32, 32, 32, 32, 32],[32, 32, 32, 32, 32, 32],[32, 32, 32, 32, 32, 32]]
-#rank_line_graph(conv_size_list,shortcut_indexes,path='AdaS_adapt_trial=0_net=AdaptiveNet_0.1_dataset=CIFAR10.xlsx')
+'''
+shortcut_indexes=[7,14,21,28]
+conv_size_list64=[[64,64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64]]
+conv_size_list32=[[32,32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32]]
+conv_size_list96=[[96,96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96]]
+conv_size_list128=[[128,128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128]]
+#create_rank_graph(conv_size_list32,shortcut_indexes,path='32.xlsx')
+print(calculate_slopes(conv_size_list32,shortcut_indexes,path='32.xlsx'))
+'''
