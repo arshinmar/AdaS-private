@@ -46,7 +46,9 @@ import torchvision.models as models
 
 import torch.onnx
 from ptflops import get_model_complexity_info
-
+import sys
+sys.path.append("..")
+import global_vars as GLOBALS
 class BasicBlock(nn.Module):
 
 
@@ -124,11 +126,11 @@ class Network(nn.Module):
         self.shortcut_3_index = 21 #Number on excel corresponding to shortcut 2
         self.shortcut_4_index = 28
         ####################### O% ########################
-        self.superblock1_indexes=[64,64,64,64,64,64,64]
-        self.superblock2_indexes=[64,64,64,64,64,64]
-        self.superblock3_indexes=[64,64,64,64,64,64]
-        self.superblock4_indexes=[64,64,64,64,64,64]
-        self.superblock5_indexes=[64,64,64,64,64,64]
+        self.superblock1_indexes=GLOBALS.super1_idx
+        self.superblock2_indexes=GLOBALS.super2_idx
+        self.superblock3_indexes=GLOBALS.super3_idx
+        self.superblock4_indexes=GLOBALS.super4_idx
+        self.superblock5_indexes=GLOBALS.super5_idx
 
         #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
