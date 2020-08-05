@@ -38,7 +38,7 @@ if __name__ == '__main__':
     print('~~~Initialization Complete. Beginning first training~~~')
 
     epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
-    full_train_epochs = range(0, 2)
+    full_train_epochs = range(0, 250)
 
     output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'Trials'
     output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'model_weights'
