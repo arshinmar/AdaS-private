@@ -362,6 +362,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         args(parser)
         args_true = parser.parse_args()
         train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
+        
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
         print('~~~Training with new model~~~')

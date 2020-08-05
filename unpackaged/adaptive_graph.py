@@ -174,30 +174,35 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
     for i in range(len(layers_info.iloc[:,0].to_numpy())):
         temp=''
         main=layers_info.iloc[i,1:].to_numpy()
-        for i in main:
-            temp+=i[:]
+        for j in main:
+            temp+=j[:]
         temp=ast.literal_eval(remove_brackets(temp))
         layers_size_list+=[temp]
 
-    barWidth=0.5
+
     layers_list=[[]]
     if num_trials<=10:
         mult_val,temp_val=6,5
-        for i in range(1,32,1):
-            layers_list[0]+=[6*i]
     else:
-        mult_val,temp_val=12,10
-        for i in range(1,32,1):
-            layers_list[0]+=[12*i]
+        mult_val,temp_val=(45/20)*num_trials,10
+
+    barWidth=(0.5/6)*mult_val
+    if num_trials<=10:
+        trueWidth=barWidth
+    else:
+        trueWidth=(2/20)*num_trials
+
+    for i in range(1,32,1):
+        layers_list[0]+=[mult_val*i]
 
     for i in range(1,len(layers_size_list),1):
-        temp=[x + barWidth for x in layers_list[i-1]]
+        temp=[x + trueWidth for x in layers_list[i-1]]
         layers_list+=[temp]
 
     colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
     plt.figure()
-    for i in range(0,len(layers_list),1):
-        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=barWidth, edgecolor='white',label=str('Trial '+str(i+1)))
+    for i in range(0,len(layers_size_list),1):
+        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(i+1)))
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
@@ -205,15 +210,17 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
     if num_trials<=10:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
-        plt.xticks([mult_val*r + temp_val*barWidth + 6 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
+        plt.xticks([mult_val*r + num_trials*0.3 + 3*num_trials for r in range(len(temp))], [str(i) for i in range(len(temp))])
 
     plt.legend(loc='upper right')
     figure=plt.gcf()
-    figure.set_size_inches(11.4, 5.34)
+    if num_trials<=10:
+        figure.set_size_inches(11.4, 5.34)
+    else:
+        figure.set_size_inches(40.4, 5.34)
     #addition=str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])
     plt.savefig(path,bbox_inches='tight')
     return True
-
 
 def even_round(number):
     return int(round(number/2)*2)
