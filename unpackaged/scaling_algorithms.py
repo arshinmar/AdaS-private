@@ -54,14 +54,14 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
 
     FIRST_TIME=False
 
-    slope_averages=[]
+    #slope_averages=[]
     if last_operation==[]:
         FIRST_TIME = True
         for i in conv_size_list:
             factor_scale.append([0.1]*len(i))
             last_operation.append([1]*len(i))
             delta_percentage.append([0]*len(i))
-            slope_averages.append([0.1]*len(i))
+            #slope_averages.append([0.1]*len(i))
 
     for superblock in range(len(new_channel_sizes)):
         for layer in range(0,len(new_channel_sizes[superblock])):
@@ -75,8 +75,8 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
                 rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
                 yaxis+=[rank_averages[superblock][layer]]
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
-            slope_averages[superblock][layer] = slope(yaxis,break_point)
-            delta_percentage[superblock][layer] = slope_averages[superblock][layer]
+            #slope_averages[superblock][layer] = slope(yaxis,break_point)
+            delta_percentage[superblock][layer] = (slope(yaxis,break_point))[superblock][layer]
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
             print(delta_percentage, 'SLOPES')
