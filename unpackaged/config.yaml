@@ -11,13 +11,12 @@ beta: 0.7
 init_lr: 0.1
 
 adapt_trials: 20
-init_conv_setting: '64,64,64,64,64'
 adapt_rank_threshold: 0.3
 epochs_per_trial: 20
-
-delta_threshold: 0.2
+init_conv_setting: '64,64,64,64,64'
+delta_threshold: 0.1
 min_scale_limit: 0.01
-
+stable_epoch: 0
 ###### Suggested Default ######
 max_epoch: 250
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
