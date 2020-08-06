@@ -24,3 +24,4 @@ super4_idx = [64,64,64,64,64,64]
 super5_idx = [64,64,64,64,64,64]
 OUTPUT_PATH = ''
 index = None
+index_used = super1_idx + super2_idx + super3_idx + super4_idx + super5_idx

@@ -156,11 +156,13 @@ def initialize(args: APNamespace, new_network):
         GLOBALS.super4_idx = [64,64,64,64]
         GLOBALS.super5_idx = [64,64,64,64]
     else:
-        GLOBALS.super1_idx = [64,64,64,64,64,64]
-        GLOBALS.super2_idx = [64,64,64,64,64]
-        GLOBALS.super3_idx = [64,64,64,64,64]
-        GLOBALS.super4_idx = [64,64,64,64,64]
-        GLOBALS.super5_idx = [64,64,64,64,64]
+        GLOBALS.super1_idx = [64,64,64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64,64,64]
+
+    GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx + GLOBALS.super5_idx
 
     if GLOBALS.FIRST_INIT == True:
         GLOBALS.NET = get_net(
