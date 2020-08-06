@@ -42,6 +42,54 @@ def get_ranks(path = GLOBALS.EXCEL_PATH, epoch_number = -1):
 
     return last_rank_col_in, last_rank_col_out
 
+
+'''def delta_scaling_relative(conv_size_list,delta_threshold,min_scale_limit,num_trials,shortcut_indexes,last_delta,last_operation,factor_scale,delta_percentage,previous_path=None):
+    input_ranks_final,output_ranks_final = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=-1)
+    input_ranks_stable,output_ranks_stable = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
+    rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
+    rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
+
+    STOP = 0
+    FIRST_TIME=False
+
+    new_channel_sizes=copy.deepcopy(conv_size_list)
+    slope_averages=[]
+    if last_delta==[]:
+        FIRST_TIME = True
+        for i in conv_size_list:
+            factor_scale.append([0.1]*len(i))
+            last_delta.append([1]*len(i))
+            last_operation.append([1]*len(i))
+            delta_percentage.append([0]*len(i))
+            slope_averages.append([0.1]*len(i))
+
+    for superblock in range(len(new_channel_sizes)):
+        for layer in range(0,len(new_channel_sizes[superblock])):
+
+            if (last_operation[superblock][layer] == STOP):
+                continue
+
+            epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
+            yaxis=[]
+            yaxis_previous=[]
+            for k in range(GLOBALS.CONFIG['epochs_per_trial']):
+                input_ranks,output_ranks=get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=k)
+                rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+                yaxis+=[rank_averages[superblock][layer]]
+            break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
+            current_delta = slope(yaxis,break_point)
+
+            if (current_delta<last_delta[superblock][layer] and FIRST_TIME==False):
+                new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]))
+            else:
+                new_channel_sizes[superblock][layer] = conv_size_list[superblock][layer]
+                if (factor_scale[superblock][layer] < min_scale_limit):
+                    current_operation = STOP
+                factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
+            last_delta[superblock][layer]=current_delta
+
+    return last_operation,factor_scale,new_channel_sizes,last_delta, rank_averages_final, rank_averages_stable'''
+
 def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shortcut_indexes,last_operation,factor_scale,delta_percentage):
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
     input_ranks_final,output_ranks_final = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=-1)
@@ -75,8 +123,8 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
                 rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
                 yaxis+=[rank_averages[superblock][layer]]
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
-            slope_averages[superblock][layer] = slope(yaxis,break_point)
-            delta_percentage[superblock][layer] = slope_averages[superblock][layer]
+            #slope_averages[superblock][layer] = slope(yaxis,break_point)
+            delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
             print(delta_percentage, 'SLOPES')

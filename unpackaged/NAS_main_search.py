@@ -65,6 +65,7 @@ if __name__ == '__main__':
 
     #run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,range(0,250),output_path_fulltrain)
     #Note Last Iter not used
+    #output_sizes=[[40,40,40,58,40,42,40],[252,90,142,90,78,90],[388,174,198,174,116,174],[334,116,176, 116, 82, 116],[388,30,40,30,44,30]]
     run_fresh_full_train(train_loader,test_loader,device,output_sizes,full_train_epochs,output_path_fulltrain)
     create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
