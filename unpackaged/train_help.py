@@ -248,11 +248,7 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     return True
 
 def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
-    GLOBALS.CONFIG['beta'] = 0.95
-    GLOBALS.FULL_TRAIN = True
-    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
-    GLOBALS.EXCEL_PATH = ''
-    GLOBALS.PERFORMANCE_STATISTICS = {}
+
     new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
@@ -265,6 +261,11 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
     GLOBALS.EARLY_STOP = EarlyStop(
             patience=int(GLOBALS.CONFIG['early_stop_patience']),
             threshold=0.001)
+    GLOBALS.CONFIG['beta'] = 0.95
+    GLOBALS.FULL_TRAIN = True
+    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
+    GLOBALS.EXCEL_PATH = ''
+    GLOBALS.PERFORMANCE_STATISTICS = {}
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
@@ -277,11 +278,7 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
 
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
-    GLOBALS.FULL_TRAIN = True
-    GLOBALS.PERFORMANCE_STATISTICS = {}
-    GLOBALS.FULL_TRAIN_MODE = 'fresh'
-    GLOBALS.EXCEL_PATH = ''
-    GLOBALS.CONFIG['beta'] = 0.95
+
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
@@ -297,6 +294,11 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     GLOBALS.EARLY_STOP = EarlyStop(
             patience=int(GLOBALS.CONFIG['early_stop_patience']),
             threshold=0.001)
+    GLOBALS.FULL_TRAIN = True
+    GLOBALS.PERFORMANCE_STATISTICS = {}
+    GLOBALS.FULL_TRAIN_MODE = 'fresh'
+    GLOBALS.EXCEL_PATH = ''
+    GLOBALS.CONFIG['beta'] = 0.95
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
@@ -362,7 +364,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         args(parser)
         args_true = parser.parse_args()
         train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
-        
+
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
         print('~~~Training with new model~~~')
