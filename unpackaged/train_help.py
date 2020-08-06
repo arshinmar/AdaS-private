@@ -289,9 +289,7 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
 
     print('Using Early stopping of thresh 0.001')
-    GLOBALS.EARLY_STOP = EarlyStop(
-            patience=int(GLOBALS.CONFIG['early_stop_patience']),
-            threshold=0.001)
+    GLOBALS.EARLY_STOP = EarlyStop(patience=int(GLOBALS.CONFIG['early_stop_patience']),threshold=0.001)
     GLOBALS.FULL_TRAIN = True
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
