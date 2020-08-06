@@ -132,11 +132,6 @@ class Network(nn.Module):
         self.superblock4_indexes=GLOBALS.super4_idx
         self.superblock5_indexes=GLOBALS.super5_idx
 
-        self.superblock1_indexes=[64,64,64,64,64]
-        self.superblock2_indexes=[64,64,64,64]
-        self.superblock3_indexes=[64,64,64,64]
-        self.superblock4_indexes=[64,64,64,64]
-        self.superblock5_indexes=[64,64,64,64]
 
         #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
@@ -160,7 +155,7 @@ class Network(nn.Module):
             counter+=len(j) + 1
             shortcut_indexes+=[counter]
 
-        print(shortcut_indexes)
+        #print(shortcut_indexes)
 
         self.shortcut_1_index = shortcut_indexes[0]
         self.shortcut_2_index = shortcut_indexes[1]
@@ -239,4 +234,4 @@ def test():
     torch.onnx.export(net, dummy_input, "model.onnx")
 
 
-test()
+#test()
