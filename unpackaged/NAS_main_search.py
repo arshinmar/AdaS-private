@@ -28,7 +28,6 @@ if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args_true = parser.parse_args()
-    
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0)
     output_path = output_path / f"conv_{GLOBALS.CONFIG['init_conv_setting']}_deltaThresh={GLOBALS.CONFIG['delta_threshold']}_minScaleLimit={GLOBALS.CONFIG['min_scale_limit']}_beta={GLOBALS.CONFIG['beta']}_epochpert={GLOBALS.CONFIG['epochs_per_trial']}_adaptnum={GLOBALS.CONFIG['adapt_trials']}"
     GLOBALS.OUTPUT_PATH_STRING = str(output_path)
