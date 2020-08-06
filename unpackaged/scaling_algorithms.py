@@ -75,8 +75,7 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
                 rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
                 yaxis+=[rank_averages[superblock][layer]]
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
-            slope_averages[superblock][layer] = slope(yaxis,break_point)
-            delta_percentage[superblock][layer] = slope_averages[superblock][layer]
+            delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
             print(delta_percentage, 'SLOPES')
