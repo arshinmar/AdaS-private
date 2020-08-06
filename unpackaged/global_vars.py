@@ -16,6 +16,7 @@ EXCEL_PATH = 'path'
 THRESHOLD = 0
 FULL_TRAIN = False
 FULL_TRAIN_MODE = ''
+
 super1_idx = [64,64,64,64,64,64,64]
 super2_idx = [64,64,64,64,64,64]
 super3_idx = [64,64,64,64,64,64]
