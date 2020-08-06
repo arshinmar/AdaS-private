@@ -278,7 +278,6 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
 
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
-
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
@@ -291,9 +290,7 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
 
     print('Using Early stopping of thresh 0.001')
-    GLOBALS.EARLY_STOP = EarlyStop(
-            patience=int(GLOBALS.CONFIG['early_stop_patience']),
-            threshold=0.001)
+    GLOBALS.EARLY_STOP = EarlyStop(patience=int(GLOBALS.CONFIG['early_stop_patience']),threshold=0.001)
     GLOBALS.FULL_TRAIN = True
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
