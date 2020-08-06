@@ -28,6 +28,7 @@ if __name__ == '__main__':
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args_true = parser.parse_args()
+    
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0)
     output_path = output_path / f"conv_{GLOBALS.CONFIG['init_conv_setting']}_deltaThresh={GLOBALS.CONFIG['delta_threshold']}_minScaleLimit={GLOBALS.CONFIG['min_scale_limit']}_beta={GLOBALS.CONFIG['beta']}_epochpert={GLOBALS.CONFIG['epochs_per_trial']}_adaptnum={GLOBALS.CONFIG['adapt_trials']}"
     GLOBALS.OUTPUT_PATH_STRING = str(output_path)
@@ -66,6 +67,7 @@ if __name__ == '__main__':
     #run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,range(0,250),output_path_fulltrain)
     #Note Last Iter not used
     #output_sizes=[[40,40,40,58,40,42,40],[252,90,142,90,78,90],[388,174,198,174,116,174],[334,116,176, 116, 82, 116],[388,30,40,30,44,30]]
+
     run_fresh_full_train(train_loader,test_loader,device,output_sizes,full_train_epochs,output_path_fulltrain)
     create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",

@@ -127,7 +127,6 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
-            print(delta_percentage, 'SLOPES')
 
             current_operation = EXPAND if delta_percentage[superblock][layer] >= delta_threshold else SHRINK
 
@@ -229,6 +228,8 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     #print(conv_size_list,'CONV SIZE LIST')
     output_conv_size_list=copy.deepcopy(conv_size_list)
     rank_averages = copy.deepcopy(conv_size_list)
+
+    #block_averages=[[avg for intermediate_planes, avg for in]]
     for i in range(0,len(block_averages)):
         for j in range(0,len(conv_size_list[i])):
             if (i==0):
@@ -240,11 +241,13 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
                 if (j%2==1):
                     scaling_factor=block_averages[i][-1]-threshold
                 else:
+                    
                     scaling_factor=block_averages[i][int(j/2)]-threshold
             output_conv_size_list[i][j]=even_round(output_conv_size_list[i][j]*(1+scaling_factor))
             rank_averages[i][j] = scaling_factor + threshold
 
     if final==True:
+
         GLOBALS.super1_idx = output_conv_size_list[0]
         GLOBALS.super2_idx = output_conv_size_list[1]
         GLOBALS.super3_idx = output_conv_size_list[2]

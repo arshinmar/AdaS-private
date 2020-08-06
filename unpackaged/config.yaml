@@ -10,15 +10,17 @@ n_trials: 1
 beta: 0.7
 init_lr: 0.1
 
-adapt_trials: 20
+adapt_trials: 2
 adapt_rank_threshold: 0.3
-epochs_per_trial: 20
+epochs_per_trial: 2
 init_conv_setting: '64,64,64,64,64'
-delta_threshold: 0.005
+delta_threshold: 0.0225
 min_scale_limit: 0.01
 stable_epoch: 0
+blocks_per_superblock: 3
+
 ###### Suggested Default ######
-max_epoch: 250
+max_epoch: 2
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
 early_stop_patience: 10 # epoch window to consider when deciding whether to stop
 mini_batch_size: 128

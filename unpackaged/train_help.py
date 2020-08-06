@@ -149,6 +149,21 @@ def initialize(args: APNamespace, new_network):
     #Gets initial conv size list (string) from config yaml file and converts into int list
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
 
+    if GLOBALS.CONFIG['blocks_per_superblock']==2:
+        GLOBALS.super1_idx = [64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64]
+    else:
+        GLOBALS.super1_idx = [64,64,64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64,64,64]
+
+    GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx + GLOBALS.super5_idx
+
     if GLOBALS.FIRST_INIT == True:
         GLOBALS.NET = get_net(
                     GLOBALS.CONFIG['network'], num_classes=10 if
@@ -322,6 +337,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+
     conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
     conv_data.loc[0] = conv_size_list
     delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
@@ -336,7 +352,12 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
         input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
         counter=-1
-        shortcut_indexes=[7,14,21,28]
+        shortcut_indexes=[]
+        for j in conv_size_list:
+            if len(shortcut_indexes)==len(conv_size_list)-1:
+                break
+            counter+=len(j) + 1
+            shortcut_indexes+=[counter]
         index_conv_size_list=GLOBALS.index
         print('GLOBALS.EXCEL_PATH:{}'.format(GLOBALS.EXCEL_PATH))
         start=time.time()

@@ -193,8 +193,8 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
         trueWidth=barWidth
     else:
         trueWidth=(2/20)*num_trials
-
-    for i in range(1,32,1):
+    #32
+    for i in range(1,len(GLOBALS.index_used)+1,1):
         layers_list[0]+=[mult_val*i]
 
     for i in range(1,len(layers_size_list),1):
