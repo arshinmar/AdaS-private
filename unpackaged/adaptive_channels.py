@@ -33,6 +33,7 @@ from collections import OrderedDict
 #import global_vars as GLOBALS
 import time, copy
 
+'''TAKES IN A STATE_DICT WITH NO (MODULE.)'''
 def prototype(net_state_dict,new_output_sizes):
     '''CONVERTS LIST TO TUPLE'''
     def convert(list):
@@ -220,7 +221,7 @@ def prototype(net_state_dict,new_output_sizes):
         else:
             continue
 
-        new_state_dict = OrderedDict({param_tensor[7:]: final})
+        new_state_dict = OrderedDict({param_tensor: final})
         model.load_state_dict(new_state_dict, strict=False)
 
     end=time.time()

@@ -61,7 +61,7 @@ class IOMetrics(NamedTuple):
 class LRMetrics(NamedTuple):
     rank_velocity: List[float]
     r_conv: List[float]
-    
+
 class Statistics(NamedTuple):
     ram: float
     gpu_mem: float

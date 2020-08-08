@@ -241,7 +241,6 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
                 if (j%2==1):
                     scaling_factor=block_averages[i][-1]-threshold
                 else:
-                    
                     scaling_factor=block_averages[i][int(j/2)]-threshold
             output_conv_size_list[i][j]=even_round(output_conv_size_list[i][j]*(1+scaling_factor))
             rank_averages[i][j] = scaling_factor + threshold
