@@ -70,7 +70,7 @@ if __name__ == '__main__':
     output_sizes=[[80,84,80,94,80],[388,116,196,116],[312,218,312,218],[388,120,188,120],[388,74,28,74]]
     run_fresh_full_train(train_loader,test_loader,device,output_sizes,full_train_epochs,output_path_fulltrain)
     create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
-                                 output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_beta={GLOBALS.CONFIG['beta']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+                                 output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train)
 
     print('Done Full Train and Trials.')
