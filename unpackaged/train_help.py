@@ -150,11 +150,11 @@ def initialize(args: APNamespace, new_network):
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
 
     if GLOBALS.CONFIG['blocks_per_superblock']==2:
-        GLOBALS.super1_idx = [64,64,64,64,64]
-        GLOBALS.super2_idx = [64,64,64,64]
-        GLOBALS.super3_idx = [64,64,64,64]
-        GLOBALS.super4_idx = [64,64,64,64]
-        GLOBALS.super5_idx = [64,64,64,64]
+        GLOBALS.super1_idx = [46, 58, 46, 58, 46]
+        GLOBALS.super2_idx = [112, 66, 130, 66]
+        GLOBALS.super3_idx = [388, 110, 210, 110]
+        GLOBALS.super4_idx = [66, 82, 124, 82]
+        GLOBALS.super5_idx = [42, 54, 36, 54]
     else:
         GLOBALS.super1_idx = [64,64,64,64,64,64,64]
         GLOBALS.super2_idx = [64,64,64,64,64,64]
@@ -165,6 +165,7 @@ def initialize(args: APNamespace, new_network):
     GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx + GLOBALS.super5_idx
 
     if GLOBALS.FIRST_INIT == True:
+        print('FIRST_INIT==True, GETTING NET FROM CONFIG')
         GLOBALS.NET = get_net(
                     GLOBALS.CONFIG['network'], num_classes=10 if
                     GLOBALS.CONFIG['dataset'] == 'CIFAR10' else 100 if
@@ -297,7 +298,7 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
-
+    GLOBALS.FIRST_INIT = False
     #optimizer,scheduler=network_initialize(new_network,train_loader)
     parser = ArgumentParser(description=__doc__)
     args(parser)
@@ -420,6 +421,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
                 xlsx_name = \
                     f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             else:
