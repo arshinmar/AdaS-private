@@ -281,6 +281,7 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
+    GLOBALS.FIRST_INIT = False
 
     #optimizer,scheduler=network_initialize(new_network,train_loader)
     parser = ArgumentParser(description=__doc__)

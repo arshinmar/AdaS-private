@@ -59,12 +59,13 @@ if __name__ == '__main__':
     if not os.path.exists(output_path_string_full_train):
         os.mkdir(output_path_string_full_train)
 
-    conv_data,rank_final_data,rank_stable_data,output_sizes,delta_info=run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train)
-    create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights)
-    print('Done Trials.')
+    #conv_data,rank_final_data,rank_stable_data,output_sizes,delta_info=run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train)
+    #create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights)
+    #print('Done Trials.')
 
     #run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,range(0,250),output_path_fulltrain)
     #Note Last Iter not used
+    output_sizes=[[60, 40, 60, 62, 60, 80, 60],[388, 148, 216, 148, 140, 148],[388, 210, 388, 210, 186, 210],[388, 312, 258, 312, 218, 312],[388, 42, 40, 42, 54, 42]]
     run_fresh_full_train(train_loader,test_loader,device,output_sizes,full_train_epochs,output_path_fulltrain)
     create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
