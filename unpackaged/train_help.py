@@ -279,6 +279,9 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
+
+    print(output_sizes,'NETWORK INITIALIZED WITH THESE OUTPUT SIZES')
+
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
     GLOBALS.FIRST_INIT = False
