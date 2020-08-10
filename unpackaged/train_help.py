@@ -24,6 +24,7 @@ import copy
 import torch
 import torch.backends.cudnn as cudnn
 from scaling_algorithms import *
+import ast
 
 from utils import parse_config
 from metrics import Metrics
@@ -71,7 +72,7 @@ def args(sub_parser: _SubParsersAction):
         help="Flag: CPU bound training")
     sub_parser.set_defaults(cpu=False)
 
-def initialize(args: APNamespace, new_network):
+def initialize(args: APNamespace, new_network, beta=None):
     def get_loss(loss: str) -> torch.nn.Module:
         return torch.nn.CrossEntropyLoss() if loss == 'cross_entropy' else None
 
@@ -150,11 +151,11 @@ def initialize(args: APNamespace, new_network):
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
 
     if GLOBALS.CONFIG['blocks_per_superblock']==2:
-        GLOBALS.super1_idx = [46, 58, 46, 58, 46]
-        GLOBALS.super2_idx = [112, 66, 130, 66]
-        GLOBALS.super3_idx = [388, 110, 210, 110]
-        GLOBALS.super4_idx = [66, 82, 124, 82]
-        GLOBALS.super5_idx = [42, 54, 36, 54]
+        GLOBALS.super1_idx = [64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64]
     else:
         GLOBALS.super1_idx = [64,64,64,64,64,64,64]
         GLOBALS.super2_idx = [64,64,64,64,64,64]
@@ -184,6 +185,16 @@ def initialize(args: APNamespace, new_network):
     GLOBALS.NET = GLOBALS.NET.to(device)
 
     GLOBALS.CRITERION = get_loss(GLOBALS.CONFIG['loss'])
+
+
+    if beta==None:
+        beta_true=GLOBALS.CONFIG['beta']
+    else:
+        beta_true=beta #Beta that you pass in.
+
+
+    GLOBALS.CONFIG['beta']=beta_true
+
 
     optimizer, scheduler = get_optimizer_scheduler(
             net_parameters=GLOBALS.NET.parameters(),
@@ -299,11 +310,12 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
     GLOBALS.FIRST_INIT = False
+
     #optimizer,scheduler=network_initialize(new_network,train_loader)
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args_true = parser.parse_args()
-    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
+    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,beta=GLOBALS.CONFIG['beta_full'])
 
     print('Using Early stopping of thresh 0.001')
     GLOBALS.EARLY_STOP = EarlyStop(patience=int(GLOBALS.CONFIG['early_stop_patience']),threshold=0.001)
@@ -311,16 +323,15 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
     GLOBALS.EXCEL_PATH = ''
-    GLOBALS.CONFIG['beta'] = 0.95
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
         if val==-1:
             continue
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'FRESH')
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
+        #print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
         break;
-    print('~~~FRESH TRAINING, USING BETA: {} ~~~'.format(GLOBALS.CONFIG['beta']))
+
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
     return True
 
@@ -400,6 +411,15 @@ def create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data
     rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
     create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
     torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
+
+def get_output_sizes(file_name):
+    outputs=pd.read_excel(file_name)
+    output_sizes=outputs.iloc[-1,1:]
+    output_sizes=output_sizes.tolist()
+    output_sizes_true=[ast.literal_eval(i) for i in output_sizes]
+    print(output_sizes_true,'Output sizes frome excel')
+    return output_sizes_true
+
 
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
