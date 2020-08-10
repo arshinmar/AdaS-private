@@ -10,7 +10,7 @@ n_trials: 1
 
 beta: 0.7
 beta_full: 0.95
-full_train: False
+full_train_only: False
 
 init_lr: 0.1
 
