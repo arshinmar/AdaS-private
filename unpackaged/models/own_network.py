@@ -121,17 +121,15 @@ class Network(nn.Module):
         super(Network, self).__init__()
 
         ################################################################################## AdaS ##################################################################################
-        self.shortcut_1_index = 7 #Number on excel corresponding to shortcut 1
+        '''self.shortcut_1_index = 7 #Number on excel corresponding to shortcut 1
         self.shortcut_2_index = 14 #Number on excel corresponding to shortcut 2
         self.shortcut_3_index = 21 #Number on excel corresponding to shortcut 2
-        self.shortcut_4_index = 28
+        self.shortcut_4_index = 28'''
         ####################### O% ########################
         self.superblock1_indexes=GLOBALS.super1_idx
         self.superblock2_indexes=GLOBALS.super2_idx
         self.superblock3_indexes=GLOBALS.super3_idx
         self.superblock4_indexes=GLOBALS.super4_idx
-        self.superblock5_indexes=GLOBALS.super5_idx
-
 
         #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
@@ -144,11 +142,13 @@ class Network(nn.Module):
             self.superblock2_indexes=new_output_sizes[1]
             self.superblock3_indexes=new_output_sizes[2]
             self.superblock4_indexes=new_output_sizes[3]
-            self.superblock5_indexes=new_output_sizes[4]
 
         shortcut_indexes=[]
         counter=-1
-        conv_size_list=[self.superblock1_indexes,self.superblock2_indexes,self.superblock3_indexes,self.superblock4_indexes,self.superblock5_indexes]
+        conv_size_list=[self.superblock1_indexes,self.superblock2_indexes,self.superblock3_indexes,self.superblock4_indexes]
+
+        print(conv_size_list,'NETWORK ARCHITECTURE')
+
         for j in conv_size_list:
             if len(shortcut_indexes)==len(conv_size_list)-1:
                 break
@@ -160,9 +160,8 @@ class Network(nn.Module):
         self.shortcut_1_index = shortcut_indexes[0]
         self.shortcut_2_index = shortcut_indexes[1]
         self.shortcut_3_index = shortcut_indexes[2]
-        self.shortcut_4_index = shortcut_indexes[3]
 
-        self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes+self.superblock5_indexes
+        self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
 
         self.num_classes=num_classes
         self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
@@ -179,7 +178,7 @@ class Network(nn.Module):
         for i in range(2,len(self.index)-2,2):
             #print(self.index [i],self.index [i+1],self.index [i+2],'for loop ',i)
             #if (self.index[i]!=self.index[i+2] or self.index[i]!=self.index[i+1]) and output_size>4:
-            if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index or i+4==self.shortcut_4_index):
+            if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
                 stride=2
             else:
                 stride=1

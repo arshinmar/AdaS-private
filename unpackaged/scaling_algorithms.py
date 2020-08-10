@@ -146,32 +146,29 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
 
 def calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold):
     output_ranks_layer_1 = output_ranks[0]
-    scaling_factor=[0,0,0,0,0]
+    scaling_factor=[0,0,0,0]
+
     output_ranks_superblock_1 = output_ranks[1:shortcut_indexes[0]]
     output_ranks_superblock_2 = output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
     output_ranks_superblock_3 = output_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]]
     output_ranks_superblock_4 = output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]
-    output_ranks_superblock_5 = output_ranks[shortcut_indexes[3]+1:]
 
     super_block_1_val=conv_size_list[0][0]
     super_block_2_val=conv_size_list[1][0]
     super_block_3_val=conv_size_list[2][0]
     super_block_4_val=conv_size_list[3][0]
-    super_block_5_val=conv_size_list[4][0]
 
     scaling_factor[0] = np.average(output_ranks_superblock_1)-threshold
     scaling_factor[1] = np.average(output_ranks_superblock_2)-threshold
     scaling_factor[2] = np.average(output_ranks_superblock_3)-threshold
     scaling_factor[3] = np.average(output_ranks_superblock_4)-threshold
-    scaling_factor[4] = np.average(output_ranks_superblock_5)-threshold
 
     super_block_1 = [even_round(super_block_1_val*(1+scaling_factor[0]))] * (len(output_ranks_superblock_1)+1)
     super_block_2 = [even_round(super_block_2_val*(1+scaling_factor[1]))] * len(output_ranks_superblock_2)
     super_block_3 = [even_round(super_block_3_val*(1+scaling_factor[2]))] * len(output_ranks_superblock_3)
     super_block_4 = [even_round(super_block_4_val*(1+scaling_factor[3]))] * len(output_ranks_superblock_4)
-    super_block_5 = [even_round(super_block_5_val*(1+scaling_factor[4]))] * len(output_ranks_superblock_5)
 
-    output_conv_size_list=[super_block_1]+[super_block_2]+[super_block_3]+[super_block_4]+[super_block_5]
+    output_conv_size_list=[super_block_1]+[super_block_2]+[super_block_3]+[super_block_4]
     print(output_conv_size_list)
 
     return output_conv_size_list
@@ -251,8 +248,7 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         GLOBALS.super2_idx = output_conv_size_list[1]
         GLOBALS.super3_idx = output_conv_size_list[2]
         GLOBALS.super4_idx = output_conv_size_list[3]
-        GLOBALS.super5_idx = output_conv_size_list[4]
-        GLOBALS.index = output_conv_size_list[0] + output_conv_size_list[1] + output_conv_size_list[2] + output_conv_size_list[3] + output_conv_size_list[4]
+        GLOBALS.index = output_conv_size_list[0] + output_conv_size_list[1] + output_conv_size_list[2] + output_conv_size_list[3]
 
     #print(output_conv_size_list,'OUTPUT CONV SIZE LIST')
     return output_conv_size_list, rank_averages

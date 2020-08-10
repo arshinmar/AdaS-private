@@ -150,20 +150,18 @@ def initialize(args: APNamespace, new_network, beta=None):
     #Gets initial conv size list (string) from config yaml file and converts into int list
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
 
-    if GLOBALS.CONFIG['blocks_per_superblock']==2:
+    '''if GLOBALS.CONFIG['blocks_per_superblock']==2:
         GLOBALS.super1_idx = [64,64,64,64,64]
         GLOBALS.super2_idx = [64,64,64,64]
         GLOBALS.super3_idx = [64,64,64,64]
         GLOBALS.super4_idx = [64,64,64,64]
-        GLOBALS.super5_idx = [64,64,64,64]
     else:
         GLOBALS.super1_idx = [64,64,64,64,64,64,64]
         GLOBALS.super2_idx = [64,64,64,64,64,64]
         GLOBALS.super3_idx = [64,64,64,64,64,64]
-        GLOBALS.super4_idx = [64,64,64,64,64,64]
-        GLOBALS.super5_idx = [64,64,64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64,64,64]'''
 
-    GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx + GLOBALS.super5_idx
+    GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx
 
     if GLOBALS.FIRST_INIT == True:
         print('FIRST_INIT==True, GETTING NET FROM CONFIG')
@@ -346,11 +344,11 @@ def create_graphs(accuracy_data_file_name,conv_data_file_name,rank_final_file_na
     return True
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train):
-    conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
-    rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
-    rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+    conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+    rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+    rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
 
-    conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
+    conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx]
     conv_data.loc[0] = conv_size_list
     delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
 
