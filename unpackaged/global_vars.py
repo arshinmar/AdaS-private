@@ -16,10 +16,12 @@ EXCEL_PATH = 'path'
 THRESHOLD = 0
 FULL_TRAIN = False
 FULL_TRAIN_MODE = ''
-super1_idx = [32, 40, 32, 34, 32, 26, 32]
-super2_idx = [92, 66, 88, 66, 78, 66]
-super3_idx = [388, 132, 222, 132, 118, 132]
-super4_idx = [110, 88, 126, 88, 68, 88]
-super5_idx = [138, 40, 16, 40, 30, 40]
+
+super1_idx = [64,64,64,64,64]
+super2_idx = [64,64,64,64]
+super3_idx = [64,64,64,64]
+super4_idx = [64,64,64,64]
+super5_idx = [64,64,64,64]
 OUTPUT_PATH = ''
 index = None
+index_used = super1_idx + super2_idx + super3_idx + super4_idx + super5_idx
