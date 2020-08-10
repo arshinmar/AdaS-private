@@ -17,11 +17,11 @@ THRESHOLD = 0
 FULL_TRAIN = False
 FULL_TRAIN_MODE = ''
 
-super1_idx = [64,64,64,64,64]
-super2_idx = [64,64,64,64]
-super3_idx = [64,64,64,64]
-super4_idx = [64,64,64,64]
-super5_idx = [64,64,64,64]
+super1_idx = [64,64,64,64,64,64,64]
+super2_idx = [64,64,64,64,64,64]
+super3_idx = [64,64,64,64,64,64]
+super4_idx = [64,64,64,64,64,64]
+super5_idx = [64,64,64,64,64,64]
 OUTPUT_PATH = ''
 index = None
 index_used = super1_idx + super2_idx + super3_idx + super4_idx + super5_idx
