@@ -68,7 +68,8 @@ if __name__ == '__main__':
     #output_sizes=[[40,40,40,58,40,42,40],[252,90,142,90,78,90],[388,174,198,174,116,174],[334,116,176, 116, 82, 116],[388,30,40,30,44,30]]
     #output_sizes=[[58,46,58,60,58,64,58],[388,106,158,106,164,106],[388,258,388,258,186,258],[388,216,334,216,156,216],[388,72,40,72,54,72]]
     #output_sizes=[[80,84,80,94,80],[388,116,196,116],[312,218,312,218],[388,120,188,120],[388,74,28,74]]
-    output_sizes=[[56,78,56,66,56],[334,118,178,118],[226,204,176,204],[200,122,146,122],[388,48,40,48]]
+    #output_sizes=[[56,78,56,66,56],[334,118,178,118],[226,204,176,204],[200,122,146,122],[388,48,40,48]]
+    output_sizes=[[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64]]
     run_fresh_full_train(train_loader,test_loader,device,output_sizes,full_train_epochs,output_path_fulltrain)
     create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"AdaS_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                  output_path_string_full_train+'\\'+f"AdaS_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
