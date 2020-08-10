@@ -46,7 +46,7 @@ if __name__ == '__main__':
     if not os.path.exists(output_path_string_full_train):
         os.mkdir(output_path_string_full_train)
 
-    if GLOBALS.CONFIG['full_train']==False:
+    if GLOBALS.CONFIG['full_train_only']==False:
         print('Starting Trials')
         conv_data,rank_final_data,rank_stable_data,output_sizes,delta_info=run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train)
         create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights)
