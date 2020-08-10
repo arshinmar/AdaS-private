@@ -193,8 +193,8 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
         trueWidth=barWidth
     else:
         trueWidth=(2/20)*num_trials
-
-    for i in range(1,32,1):
+    #32
+    for i in range(1,len(GLOBALS.index_used)+1,1):
         layers_list[0]+=[mult_val*i]
 
     for i in range(1,len(layers_size_list),1):
@@ -256,6 +256,9 @@ def adaptive_stop(x_data,y_data,threshold_min,epoch_wait):
 def slope(y_data,breakpoint):
     return (y_data[int(breakpoint)]-y_data[GLOBALS.CONFIG['stable_epoch']])/(breakpoint-GLOBALS.CONFIG['stable_epoch'])
 
+def slope_clone(y_data,breakpoint):
+    return (y_data[int(breakpoint)]-y_data[0])/(breakpoint)
+
 def our_fit(x_data,y_data):
     def func(x, a, b, c):
         return a - (a-b) * np.exp(-c * x)
@@ -289,7 +292,7 @@ def calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     return slope_averages
 
 def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
-    superblock=0
+    superblock=1
     layer=0
     epoch_num=[i for i in range(20)]
     yaxis=[]
@@ -306,7 +309,7 @@ def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
 
     #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
-    print(slope(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
+    print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
     plt.show()
     return True
 '''
@@ -316,5 +319,5 @@ conv_size_list32=[[32,32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32]
 conv_size_list96=[[96,96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96]]
 conv_size_list128=[[128,128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128]]
 #create_rank_graph(conv_size_list32,shortcut_indexes,path='32.xlsx')
-print(calculate_slopes(conv_size_list32,shortcut_indexes,path='32.xlsx'))
+print(create_rank_graph(conv_size_list64,shortcut_indexes,path='64_0.xlsx'))
 '''

@@ -132,6 +132,7 @@ class Network(nn.Module):
         self.superblock4_indexes=GLOBALS.super4_idx
         self.superblock5_indexes=GLOBALS.super5_idx
 
+
         #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
         #self.superblock3_indexes=[256, 256, 64, 64, 64, 64]
@@ -144,6 +145,22 @@ class Network(nn.Module):
             self.superblock3_indexes=new_output_sizes[2]
             self.superblock4_indexes=new_output_sizes[3]
             self.superblock5_indexes=new_output_sizes[4]
+
+        shortcut_indexes=[]
+        counter=-1
+        conv_size_list=[self.superblock1_indexes,self.superblock2_indexes,self.superblock3_indexes,self.superblock4_indexes,self.superblock5_indexes]
+        for j in conv_size_list:
+            if len(shortcut_indexes)==len(conv_size_list)-1:
+                break
+            counter+=len(j) + 1
+            shortcut_indexes+=[counter]
+
+        #print(shortcut_indexes)
+
+        self.shortcut_1_index = shortcut_indexes[0]
+        self.shortcut_2_index = shortcut_indexes[1]
+        self.shortcut_3_index = shortcut_indexes[2]
+        self.shortcut_4_index = shortcut_indexes[3]
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes+self.superblock5_indexes
 
@@ -159,16 +176,13 @@ class Network(nn.Module):
         self.relu=nn.ReLU()
 
     def _create_network(self,block):
-        output_size=56
         layers=[]
         layers.append(block(self.index[0],self.index[1],self.index[2],stride=1))
         for i in range(2,len(self.index)-2,2):
             #print(self.index [i],self.index [i+1],self.index [i+2],'for loop ',i)
             #if (self.index[i]!=self.index[i+2] or self.index[i]!=self.index[i+1]) and output_size>4:
             if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index or i+4==self.shortcut_4_index):
-
                 stride=2
-                output_size=int(output_size/2)
             else:
                 stride=1
         #    if i==len(self.index)-4:
@@ -214,14 +228,12 @@ def test():
     print('{:<30}  {:<8}'.format('Number of parameters: ', params))
 
     #print(net)
-    #g=make_dot(y)
-    #g.view()
-    '''
-
+    g=make_dot(y)
+    g.view()
     #g.view()
     torch.save(net.state_dict(),'temp_resnet.onnx')
     dummy_input = Variable(torch.randn(4, 3, 32, 32))
     torch.onnx.export(net, dummy_input, "model.onnx")
-    '''
+
 
 #test()

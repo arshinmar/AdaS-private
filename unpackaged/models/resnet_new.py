@@ -45,7 +45,6 @@ from torch.autograd import Variable
 import torchvision.models as models
 
 import torch.onnx
-from ptflops import get_model_complexity_info
 
 class BasicBlock(nn.Module):
 
@@ -99,7 +98,7 @@ class BasicBlock(nn.Module):
         x = self.conv1(y)
         #print(x.shape,'post conv1 block')
         x = self.bn1(x)
-        x = self.relu(x)
+        x = F.relu(x)
         x = self.bn2(self.conv2(x))
         #print(x.shape,'post conv2 block')
         #if self.shortcut!=nn.Sequential():
@@ -110,12 +109,34 @@ class BasicBlock(nn.Module):
         #print(self.shortcut(y).shape)
         x += self.shortcut(y)
         #print(x.shape,'post conv3 block')
-        x = self.relu(x)
+        x = F.relu(x)
         return x
+
+'''
+input_ranks = 36-long list
+output_ranks = 36-long list
+
+conv_size_list = 33-long list
+
+output_conv_size_list = 33-long list
+
+def calculate_correct_output_sizes(conv_size_list,input_ranks,output_ranks,shortcut_indexes):
+    #Note that input_ranks/output_ranks may have a different size than conv_size_list
+    input_ranks_layer1, output_ranks_layer1 = input_ranks[0], output_ranks[0]
+    input_ranks_superblock1, output_ranks_superblock1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
+    input_ranks_superblock2, output_ranks_superblock2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
+    input_ranks_superblock3, output_ranks_superblock3 = input_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]], output_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]]
+    input_ranks_superblock4, output_ranks_superblock4 = input_ranks[shortcut_indexes[2]+1:], output_ranks[shortcut_indexes[2]+1:]
+
+
+
+
+    return output_conv_size_list'''
+
 
 class ResNet(nn.Module):
 
-    def __init__(self, block, image_channels=3,index=None,num_classes=10):
+    def __init__(self, block, image_channels=3,num_classes=10):
         super(ResNet, self).__init__()
 
         ################################################################################## AdaS ##################################################################################
@@ -123,10 +144,10 @@ class ResNet(nn.Module):
         self.shortcut_2_index = 16 #Number on excel corresponding to shortcut 2
         self.shortcut_3_index = 29 #Number on excel corresponding to shortcut 2
         ####################### O% ########################
-        self.superblock1_indexes=[64, 64, 64, 64, 64, 64, 64]
+        '''self.superblock1_indexes=[64, 64, 64, 64, 64, 64, 64]
         self.superblock2_indexes=[128, 128, 128, 128, 128, 128, 128, 128]
         self.superblock3_indexes=[256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256, 256]
-        self.superblock4_indexes=[512, 512, 512, 512, 512, 512]
+        self.superblock4_indexes=[512, 512, 512, 512, 512, 512]'''
         ####################### 20% #######################
         '''self.superblock1_indexes=[58, 58, 58, 58, 58, 60, 58]
         self.superblock2_indexes=[110, 114, 114, 114, 118, 114, 118, 114]
@@ -148,24 +169,18 @@ class ResNet(nn.Module):
         self.superblock3_indexes=[104, 132, 138, 132, 148, 132, 148, 132, 144, 132, 140, 132]
         self.superblock4_indexes=[196, 158, 162, 158, 136, 158]'''
         ####################### 100% #######################
-        '''self.superblock1_indexes=[38, 38, 38, 36, 38, 40, 38]
+        self.superblock1_indexes=[38, 38, 38, 36, 38, 40, 38]
         self.superblock2_indexes=[36, 54, 62, 54, 74, 54, 76, 54]
         self.superblock3_indexes=[66, 102, 108, 102, 120, 102, 120, 102, 116, 102, 112, 102]
-        self.superblock4_indexes=[116, 70, 74, 70, 42, 70]'''
-
-        if index!=None:
-            self.superblock1_indexes=index[0]
-            self.superblock2_indexes=index[1]
-            self.superblock3_indexes=index[2]
-            self.superblock4_indexes=index[3]
+        self.superblock4_indexes=[116, 70, 74, 70, 42, 70]
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
 
         self.num_classes=num_classes
-        self.conv1 = nn.Conv2d(image_channels, self.index [0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(image_channels, self.index [0], kernel_size=3, stride=1, padding=1)
         self.bn1 = nn.BatchNorm2d(self.index[0])
         self.network=self._create_network(block)
-        self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
+        self.linear=nn.Linear(self.index[len(self.index )-1],num_classes)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
         self.maxpool=nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.relu=nn.ReLU()
@@ -189,13 +204,28 @@ class ResNet(nn.Module):
         #print(len(self.index),'len index')
         return nn.Sequential(*layers)
 
+    '''
+        self.layer1 = self._make_layer(block, 64, num_blocks[0], stride=1)
+        self.layer2 = self._make_layer(block, 128, num_blocks[1], stride=2)
+        self.layer3 = self._make_layer(block, 256, num_blocks[2], stride=2)
+        self.layer4 = self._make_layer(block, 512, num_blocks[3], stride=2)
+        self.linear = nn.Linear(512*block.ex pansion, num_classes)
+
+    def _make_layer(self, block, planes, num_blocks, stride):
+        strides = [stride] + [1]*(num_blocks-1)
+        layers = []
+        for stride in strides:
+            layers.append(block(self.in_planes, planes, stride))
+            self.in_planes = planes * block.ex pansion
+        return nn.Sequential(*layers)'''
+
     def forward(self, y):
         #print(self.index )
         x = self.conv1(y)
         #print(x.shape, 'conv1')
         x = self.bn1(x)
         #print(x.shape, 'bn1')
-        x = self.relu(x)
+        x = F.relu(x)
         #print(x.shape, 'relu')
         #x = self.maxpool(x)
         ##print(x.shape, 'max pool')
@@ -232,23 +262,14 @@ def ResNet152(num_classes: int = 10):
 def test():
     #writer = SummaryWriter('runs/resnet34_1')
     net = ResNet34()
+    print(net)
+    #print(net)
     y = net(torch.randn(1, 3, 32, 32))
     print(y.size())
-
-    macs, params = get_model_complexity_info(net, (3,32,32), as_strings=True,
-                                           print_per_layer_stat=True, verbose=True)
-    print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
-    print('{:<30}  {:<8}'.format('Number of parameters: ', params))
-
-    #print(net)
     g=make_dot(y)
-    g.view()
-    '''
-
     #g.view()
     torch.save(net.state_dict(),'temp_resnet.onnx')
     dummy_input = Variable(torch.randn(4, 3, 32, 32))
     torch.onnx.export(net, dummy_input, "model.onnx")
-    '''
 
 #test()
