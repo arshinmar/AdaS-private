@@ -17,7 +17,7 @@ init_lr: 0.1
 adapt_trials: 2
 adapt_rank_threshold: 0.3
 epochs_per_trial: 2
-init_conv_setting: '64,64,64,64'
+init_conv_setting: '32,32,32'
 delta_threshold: 0.01
 min_scale_limit: 0.01
 stable_epoch: 0
