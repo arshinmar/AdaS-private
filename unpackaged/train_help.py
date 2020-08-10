@@ -24,6 +24,7 @@ import copy
 import torch
 import torch.backends.cudnn as cudnn
 from scaling_algorithms import *
+import ast
 
 from utils import parse_config
 from metrics import Metrics
@@ -71,7 +72,7 @@ def args(sub_parser: _SubParsersAction):
         help="Flag: CPU bound training")
     sub_parser.set_defaults(cpu=False)
 
-def initialize(args: APNamespace, new_network):
+def initialize(args: APNamespace, new_network, beta=None):
     def get_loss(loss: str) -> torch.nn.Module:
         return torch.nn.CrossEntropyLoss() if loss == 'cross_entropy' else None
 
@@ -149,7 +150,23 @@ def initialize(args: APNamespace, new_network):
     #Gets initial conv size list (string) from config yaml file and converts into int list
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
 
+    if GLOBALS.CONFIG['blocks_per_superblock']==2:
+        GLOBALS.super1_idx = [64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64]
+    else:
+        GLOBALS.super1_idx = [64,64,64,64,64,64,64]
+        GLOBALS.super2_idx = [64,64,64,64,64,64]
+        GLOBALS.super3_idx = [64,64,64,64,64,64]
+        GLOBALS.super4_idx = [64,64,64,64,64,64]
+        GLOBALS.super5_idx = [64,64,64,64,64,64]
+
+    GLOBALS.index_used = GLOBALS.super1_idx + GLOBALS.super2_idx + GLOBALS.super3_idx + GLOBALS.super4_idx + GLOBALS.super5_idx
+
     if GLOBALS.FIRST_INIT == True:
+        print('FIRST_INIT==True, GETTING NET FROM CONFIG')
         GLOBALS.NET = get_net(
                     GLOBALS.CONFIG['network'], num_classes=10 if
                     GLOBALS.CONFIG['dataset'] == 'CIFAR10' else 100 if
@@ -168,6 +185,16 @@ def initialize(args: APNamespace, new_network):
     GLOBALS.NET = GLOBALS.NET.to(device)
 
     GLOBALS.CRITERION = get_loss(GLOBALS.CONFIG['loss'])
+
+
+    if beta==None:
+        beta_true=GLOBALS.CONFIG['beta']
+    else:
+        beta_true=beta #Beta that you pass in.
+
+
+    GLOBALS.CONFIG['beta']=beta_true
+
 
     optimizer, scheduler = get_optimizer_scheduler(
             net_parameters=GLOBALS.NET.parameters(),
@@ -248,11 +275,7 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     return True
 
 def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
-    GLOBALS.CONFIG['beta'] = 0.95
-    GLOBALS.FULL_TRAIN = True
-    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
-    GLOBALS.EXCEL_PATH = ''
-    GLOBALS.PERFORMANCE_STATISTICS = {}
+
     new_network=update_network(output_sizes)
     new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
     #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
@@ -265,6 +288,11 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
     GLOBALS.EARLY_STOP = EarlyStop(
             patience=int(GLOBALS.CONFIG['early_stop_patience']),
             threshold=0.001)
+    GLOBALS.CONFIG['beta'] = 0.95
+    GLOBALS.FULL_TRAIN = True
+    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
+    GLOBALS.EXCEL_PATH = ''
+    GLOBALS.PERFORMANCE_STATISTICS = {}
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
@@ -279,9 +307,6 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
     #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
     #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-
-    print(output_sizes,'NETWORK INITIALIZED WITH THESE OUTPUT SIZES')
-
     new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
     #new_network.load_state_dict(GLOBALS.NET.state_dict())
     GLOBALS.FIRST_INIT = False
@@ -290,7 +315,7 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args_true = parser.parse_args()
-    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
+    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,beta=GLOBALS.CONFIG['beta_full'])
 
     print('Using Early stopping of thresh 0.001')
     GLOBALS.EARLY_STOP = EarlyStop(patience=int(GLOBALS.CONFIG['early_stop_patience']),threshold=0.001)
@@ -298,14 +323,13 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
     GLOBALS.EXCEL_PATH = ''
-    GLOBALS.CONFIG['beta'] = 0.95
 
     for param_tensor in GLOBALS.NET.state_dict():
         val=param_tensor.find('bn')
         if val==-1:
             continue
         print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'FRESH')
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
+        #print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'FRESH')
         break;
 
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
@@ -325,6 +349,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
     rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4','superblock5'])
+
     conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx,GLOBALS.super5_idx]
     conv_data.loc[0] = conv_size_list
     delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
@@ -339,7 +364,12 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
         input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
         counter=-1
-        shortcut_indexes=[7,14,21,28]
+        shortcut_indexes=[]
+        for j in conv_size_list:
+            if len(shortcut_indexes)==len(conv_size_list)-1:
+                break
+            counter+=len(j) + 1
+            shortcut_indexes+=[counter]
         index_conv_size_list=GLOBALS.index
         print('GLOBALS.EXCEL_PATH:{}'.format(GLOBALS.EXCEL_PATH))
         start=time.time()
@@ -382,6 +412,15 @@ def create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data
     create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
     torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
+def get_output_sizes(file_name):
+    outputs=pd.read_excel(file_name)
+    output_sizes=outputs.iloc[-1,1:]
+    output_sizes=output_sizes.tolist()
+    output_sizes_true=[ast.literal_eval(i) for i in output_sizes]
+    print(output_sizes_true,'Output sizes frome excel')
+    return output_sizes_true
+
+
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
@@ -402,6 +441,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
                 xlsx_name = \
                     f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             else:
