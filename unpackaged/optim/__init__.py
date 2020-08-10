@@ -46,7 +46,7 @@ def get_optimizer_scheduler(
     adas_p = config['p']
     beta = config['beta']
     zeta = config['zeta']
-
+    print('~~~ BETA USED IN get_optimizer_scheduler: {} ~~~'.format(beta))
     optimizer = None
     scheduler = None
     if optim_method == 'SGD':
