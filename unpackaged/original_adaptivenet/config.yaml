@@ -1,0 +1,34 @@
+###### Application Specific ######
+dataset: 'CIFAR10' # options: CIFAR100, CIFAR10, ImageNet
+network: 'AdaptiveNet' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
+optim_method: 'SGD' # options: SGD, AdaM, AdaGrad, RMSProp, AdaDelta
+lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRestarts, OneCycleLR
+
+
+###### Suggested Tune ######
+n_trials: 1
+
+beta: 0.7
+beta_full: 0.95
+full_train: False
+
+init_lr: 0.1
+
+adapt_trials: 2
+adapt_rank_threshold: 0.3
+epochs_per_trial: 2
+init_conv_setting: '64,64,64,64'
+delta_threshold: 0.01
+min_scale_limit: 0.01
+stable_epoch: 0
+blocks_per_superblock: 2
+
+###### Suggested Default ######
+max_epoch: 2
+early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
+early_stop_patience: 10 # epoch window to consider when deciding whether to stop
+mini_batch_size: 128
+min_lr: 0.00000000000000000001
+zeta: 1.0
+p: 1 # options: 1, 2.
+loss: 'cross_entropy' # options: cross_entropy
