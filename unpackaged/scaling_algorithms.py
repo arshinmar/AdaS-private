@@ -106,7 +106,7 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
     if last_operation==[]:
         FIRST_TIME = True
         for i in conv_size_list:
-            factor_scale.append([0.1]*len(i))
+            factor_scale.append([0.2]*len(i))
             last_operation.append([1]*len(i))
             delta_percentage.append([0]*len(i))
             slope_averages.append([0.1]*len(i))
