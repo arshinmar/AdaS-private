@@ -2,7 +2,7 @@ from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 import os
 # import logging
-import torch.backends.cudnn as cudnn
+#import torch.backends.cudnn as cudnn
 import numpy as np
 import torch
 
@@ -53,9 +53,10 @@ if __name__ == '__main__':
         print('Done Trials.')
     else:
         try:
+            #print(int('booger'))
             output_sizes=get_output_sizes(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
         except:
-            output_sizes=[] #WHATEVER WE WANT.
+            output_sizes=[[32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32,32,32,32,32],[32,32,32,32,32,32]] #WHATEVER WE WANT.
 
     #output_sizes=[[64,64,64,64,64],[64,64,64,64],[64,64,64,64],[64,64,64,64],[64,64,64,64]]
 

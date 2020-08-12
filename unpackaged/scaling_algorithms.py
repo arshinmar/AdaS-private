@@ -12,35 +12,35 @@ from optim import get_optimizer_scheduler
 from early_stop import EarlyStop
 import sys
 from adaptive_channels import prototype
-from adaptive_graph import create_adaptive_graphs,create_layer_plot,calculate_slopes,adaptive_stop,slope
 from ptflops import get_model_complexity_info
 from models.own_network import AdaptiveNet
 import copy
 import torch
 import torch.backends.cudnn as cudnn
-
+from adaptive_graph import adaptive_stop, slope
 def even_round(number):
     return int(round(number/2)*2)
 
-def get_ranks(path = GLOBALS.EXCEL_PATH, epoch_number = -1):
+def get_info(info,path = GLOBALS.EXCEL_PATH, epoch_number = -1):
     '''
     - Read from .adas-output excel file
     - Get Final epoch ranks
     '''
     sheet = pd.read_excel(path,index_col=0)
-    out_rank_col = [col for col in sheet if col.startswith('out_rank')]
-    in_rank_col = [col for col in sheet if col.startswith('in_rank')]
+    out_condition_col = [col for col in sheet if col.startswith('out_'+info)]
+    in_condition_col = [col for col in sheet if col.startswith('in_'+info)]
 
-    out_ranks = sheet[out_rank_col]
-    in_ranks = sheet[in_rank_col]
+    out_condition = sheet[out_condition_col]
+    in_condition = sheet[in_condition_col]
 
-    last_rank_col_out = out_ranks.iloc[:,epoch_number]
-    last_rank_col_in = in_ranks.iloc[:,epoch_number]
+    last_condition_col_out = out_condition.iloc[:,epoch_number]
+    last_condition_col_in = in_condition.iloc[:,epoch_number]
 
-    last_rank_col_in = last_rank_col_in.tolist()
-    last_rank_col_out = last_rank_col_out.tolist()
+    last_condition_col_out = last_condition_col_out.tolist()
+    last_condition_col_in = last_condition_col_in.tolist()
 
-    return last_rank_col_in, last_rank_col_out
+
+    return last_condition_col_in, last_condition_col_out
 
 
 '''def delta_scaling_relative(conv_size_list,delta_threshold,min_scale_limit,num_trials,shortcut_indexes,last_delta,last_operation,factor_scale,delta_percentage,previous_path=None):
@@ -90,12 +90,15 @@ def get_ranks(path = GLOBALS.EXCEL_PATH, epoch_number = -1):
 
     return last_operation,factor_scale,new_channel_sizes,last_delta, rank_averages_final, rank_averages_stable'''
 
-def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shortcut_indexes,last_operation,factor_scale,delta_percentage):
+def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_limit,num_trials,shortcut_indexes,last_operation,factor_scale,delta_percentage):
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
-    input_ranks_final,output_ranks_final = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=-1)
-    input_ranks_stable,output_ranks_stable = get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
+    input_ranks_final,output_ranks_final = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
+    input_ranks_stable,output_ranks_stable = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
+    in_conditions,out_conditions = get_info('condition',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
     rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
+    mapping_conditions=convert_format(out_conditions,shortcut_indexes)
+    mapping_conditions[0] = [out_conditions[0]]+mapping_conditions[0]
 
     EXPAND,SHRINK,STOP = 1,-1,0
     new_channel_sizes=copy.deepcopy(conv_size_list)
@@ -119,7 +122,7 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
             epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
             yaxis=[]
             for k in range(GLOBALS.CONFIG['epochs_per_trial']):
-                input_ranks,output_ranks=get_ranks(path=GLOBALS.EXCEL_PATH,epoch_number=k)
+                input_ranks,output_ranks=get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
                 rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
                 yaxis+=[rank_averages[superblock][layer]]
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
@@ -127,7 +130,6 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
-
             current_operation = EXPAND if delta_percentage[superblock][layer] >= delta_threshold else SHRINK
 
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
@@ -136,7 +138,12 @@ def delta_scaling(conv_size_list,delta_threshold,min_scale_limit,num_trials,shor
                 factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
 
             last_operation[superblock][layer] = current_operation
-            new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
+
+            if mapping_conditions[superblock][layer] <= mapping_threshold:
+                new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
+            else:
+                last_operation[superblock][layer] = STOP
+                new_channel_sizes[superblock][layer] = conv_size_list[superblock][layer]
 
     print("Delta Percentage:{}".format(delta_percentage))
     print(factor_scale,'FACTOR SCALE')
@@ -173,6 +180,15 @@ def calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_l
 
     return output_conv_size_list
 
+
+def convert_format(full_list, temp_shortcut_indexes):
+    final=[]
+    shortcut_indexes=[0]+temp_shortcut_indexes+[len(full_list)]
+    for i in range(0,len(shortcut_indexes)-1,1):
+        final+=[full_list[shortcut_indexes[i]+1:shortcut_indexes[i+1]]]
+        #print(final,'final in covert_format loop')
+    return final
+
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
     #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
@@ -185,12 +201,11 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     input_ranks_superblock_4, output_ranks_superblock_4 = input_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]
     input_ranks_superblock_5, output_ranks_superblock_5 = input_ranks[shortcut_indexes[3]+1:], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]'''
 
-    temp_shortcut_indexes=[0]+shortcut_indexes+[len(input_ranks)]
     new_input_ranks=[]
     new_output_ranks=[]
-    for i in range(0,len(temp_shortcut_indexes)-1,1):
-        new_input_ranks+=[input_ranks[temp_shortcut_indexes[i]+1:temp_shortcut_indexes[i+1]]]
-        new_output_ranks+=[output_ranks[temp_shortcut_indexes[i]+1:temp_shortcut_indexes[i+1]]]
+
+    new_input_ranks=convert_format(input_ranks,shortcut_indexes)
+    new_output_ranks=convert_format(output_ranks,shortcut_indexes)
 
     #new_input_ranks = [input_ranks_superblock_1] + [input_ranks_superblock_2] + [input_ranks_superblock_3] + [input_ranks_superblock_4] + [input_ranks_superblock_5]
     #new_output_ranks = [output_ranks_superblock_1] + [output_ranks_superblock_2] + [output_ranks_superblock_3] + [output_ranks_superblock_4] + [output_ranks_superblock_5]

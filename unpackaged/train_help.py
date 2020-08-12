@@ -17,7 +17,7 @@ from optim import get_optimizer_scheduler
 from early_stop import EarlyStop
 import sys
 from adaptive_channels import prototype
-from adaptive_graph import create_adaptive_graphs,create_layer_plot
+from adaptive_graph import create_adaptive_graphs,create_plot,adapted_info_graph,trial_info_graph
 from ptflops import get_model_complexity_info
 from models.own_network import AdaptiveNet
 import copy
@@ -333,14 +333,34 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
     return True
 
-def create_graphs(accuracy_data_file_name,conv_data_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
-    create_adaptive_graphs(accuracy_data_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
+def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
+    create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
     conv_path=out_folder+'\\'+'dynamic_layer_Size_Plot.png'
     rank_final_path=out_folder+'\\'+'dynamic_rank_final.png'
     rank_stable_path=out_folder+'\\'+'dynamic_rank_stable.png'
-    create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path, 'Layer Size')
-    create_layer_plot(rank_final_file_name,GLOBALS.CONFIG['adapt_trials'],rank_final_path, 'Final Rank')
-    create_layer_plot(rank_stable_file_name,GLOBALS.CONFIG['adapt_trials'],rank_stable_path, 'Stable Rank')
+    output_condition_path=out_folder+'\\'+'dynamic_output_condition.png'
+    input_condition_path=out_folder+'\\'+'dynamic_input_condition.png'
+    '''create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path, 'Layer Size')
+    #create_layer_plot(rank_final_file_name,GLOBALS.CONFIG['adapt_trials'],rank_final_path, 'Final Rank')
+    #create_layer_plot(rank_stable_file_name,GLOBALS.CONFIG['adapt_trials'],rank_stable_path, 'Stable Rank')'''
+
+    last_epoch=GLOBALS.CONFIG['epochs_per_trial']-1
+    stable_epoch=GLOBALS.CONFIG['stable_epoch']
+
+    shortcut_indexes=[]
+    old_conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx]
+    counter=-1
+    for j in old_conv_size_list:
+        if len(shortcut_indexes)==len(old_conv_size_list)-1:
+            break
+        counter+=len(j) + 1
+        shortcut_indexes+=[counter]
+
+    adapted_info_graph(adapted_conv_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Layer Size',last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
     return True
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train):
@@ -374,7 +394,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         '------------------------------------------------------------------------------------------------------------------------------------------------'
         #output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])[0]
         #output_sizes=calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])
-        last_operation, factor_scale, output_sizes, delta_percentage, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,GLOBALS.CONFIG['delta_threshold'],GLOBALS.CONFIG['min_scale_limit'],GLOBALS.CONFIG['adapt_trials'],shortcut_indexes,last_operation, factor_scale, delta_percentage)
+        last_operation, factor_scale, output_sizes, delta_percentage, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,GLOBALS.CONFIG['delta_threshold'],GLOBALS.CONFIG['mapping_condition_threshold'],GLOBALS.CONFIG['min_scale_limit'],GLOBALS.CONFIG['adapt_trials'],shortcut_indexes,last_operation, factor_scale, delta_percentage)
         '------------------------------------------------------------------------------------------------------------------------------------------------'
         end=time.time()
         print((end-start),'Time ELAPSED FOR SCALING in TRIAL '+str(i))
