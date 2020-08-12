@@ -163,6 +163,8 @@ class Network(nn.Module):
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
 
+        print(self.index,'NETWORK INITIALIZED WITH THESE OUTPUT SIZES - CHECK')
+
         self.num_classes=num_classes
         self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.index[0])
