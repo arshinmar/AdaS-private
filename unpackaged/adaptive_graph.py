@@ -171,37 +171,6 @@ def remove_brackets(value):
         else:
             val+=value[i]
     return val
-
-'''
-[[[],[],[],[]],
- [[],[],[],[]]]
-[[[],[],[],[]],
- [[],[],[],[]]]
-[[[],[],[],[]],
- [[],[],[],[]]]
-
-
-[[layer1_out,layer2_out,layer3_out,....,last layer out],[layer1_out,layer2_out,layer3_out,...,[layer1_out,layer2_out,layer3_out,...],[layer1_out,layer2_out,layer3_out,..]]
-
-[[[mapping_superblock_1d],[mapping_superblock_2],[mapping_superblock_3],[mapping_superblock_4],[mapping_superblock_5]],
- [[],[],[],[],[]],
- [[],[],[],[],[]],
- [[],[],[],[],[]],
- [[],[],[],[],[]],
- [[],[],[],[],[]]]
-
-Input to create_layer_plot= List of list (in form of excel file)
-#Each row of the excel file is a list of lists
-#I read each row of the excel file,
-After line 218 =
-
-
-
-[mapping averages]
-'''
-'''
-
-'''
 def get_trial_info(file_name,num_trials,num_layers,specified_epoch, skip_connections,info):
     adaptive_set=compile_adaptive_files(file_name,num_trials)
     final_output = []

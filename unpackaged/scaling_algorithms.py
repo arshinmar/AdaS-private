@@ -109,10 +109,9 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
     if last_operation==[]:
         FIRST_TIME = True
         for i in conv_size_list:
-            factor_scale.append([0.2]*len(i))
-            last_operation.append([1]*len(i))
+            factor_scale.append([GLOBALS.CONFIG['factor_scale']]*len(i))
+            last_operation.append([GLOBALS.CONFIG['last_operation_default']]*len(i))
             delta_percentage.append([0]*len(i))
-            slope_averages.append([0.1]*len(i))
 
     for superblock in range(len(new_channel_sizes)):
         for layer in range(0,len(new_channel_sizes[superblock])):
