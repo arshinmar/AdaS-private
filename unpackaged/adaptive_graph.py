@@ -1,7 +1,7 @@
 import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
-from scipy.optimize import curve_fit
+
 import global_vars as GLOBALS
 import ast
 import copy
@@ -58,6 +58,7 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     #print(conv_size_list,'CONV SIZE LIST')
     output_conv_size_list=copy.deepcopy(conv_size_list)
     rank_averages = copy.deepcopy(conv_size_list)
+
     for i in range(0,len(block_averages)):
         for j in range(0,len(conv_size_list[i])):
             if (i==0):
@@ -90,8 +91,8 @@ def get_ranks(path = GLOBALS.EXCEL_PATH, epoch_number = -1):
     - Get Final epoch ranks
     '''
     sheet = pd.read_excel(path,index_col=0)
-    out_rank_col = [col for col in sheet if col.startswith('out_rank')]
-    in_rank_col = [col for col in sheet if col.startswith('in_rank')]
+    out_rank_col = [col for col in sheet if col.startswith('out_condition')]
+    in_rank_col = [col for col in sheet if col.startswith('in_condition')]
 
     out_ranks = sheet[out_rank_col]
     in_ranks = sheet[in_rank_col]
@@ -117,6 +118,8 @@ def compile_adaptive_files(file_name,num_trials):
         adaptive_set.append(file_name[0:manipulate_index]+str(trial_num)+file_name[manipulate_index+shift:])
 
     return adaptive_set
+
+
 
 def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
     #CHANGE THIS VALUE FOR NUMBER OF EPOCHS PER TRIAL
@@ -144,7 +147,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
     plt.xticks(np.arange(min(epoch_num), max(epoch_num)+1, total_num_epochs))
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    plt.title('Dynamic AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
+    plt.title('Dynamic AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
     plt.savefig(out_folder+'\\'+'dynamic_accuracy_plot.png',bbox_inches='tight')
     #plt.show()
 
@@ -169,19 +172,50 @@ def remove_brackets(value):
             val+=value[i]
     return val
 
-def create_layer_plot(file_name,num_trials,path,evo_type):
-    layers_info=pd.read_excel(file_name)
-    layers_size_list=[]
-
-    for i in range(len(layers_info.iloc[:,0].to_numpy())):
-        temp=''
-        main=layers_info.iloc[i,1:].to_numpy()
-        for j in main:
-            temp+=j[:]
-        temp=ast.literal_eval(remove_brackets(temp))
-        layers_size_list+=[temp]
+'''
+[[[],[],[],[]],
+ [[],[],[],[]]]
+[[[],[],[],[]],
+ [[],[],[],[]]]
+[[[],[],[],[]],
+ [[],[],[],[]]]
 
 
+[[layer1_out,layer2_out,layer3_out,....,last layer out],[layer1_out,layer2_out,layer3_out,...,[layer1_out,layer2_out,layer3_out,...],[layer1_out,layer2_out,layer3_out,..]]
+
+[[[mapping_superblock_1d],[mapping_superblock_2],[mapping_superblock_3],[mapping_superblock_4],[mapping_superblock_5]],
+ [[],[],[],[],[]],
+ [[],[],[],[],[]],
+ [[],[],[],[],[]],
+ [[],[],[],[],[]],
+ [[],[],[],[],[]]]
+
+Input to create_layer_plot= List of list (in form of excel file)
+#Each row of the excel file is a list of lists
+#I read each row of the excel file,
+After line 218 =
+
+
+
+[mapping averages]
+'''
+'''
+
+'''
+def get_trial_info(file_name,num_trials,num_layers,specified_epoch, skip_connections,info):
+    adaptive_set=compile_adaptive_files(file_name,num_trials)
+    final_output = []
+    for i in range(0,num_trials,1):
+        final_output.append([])
+    for i in range(0,num_trials):
+        dfs=pd.read_excel(adaptive_set[i])
+        for j in range(0,num_layers):
+            if (j in skip_connections):
+                continue
+            final_output[i].append(dfs[info+str(specified_epoch)][j])
+    return final_output
+
+def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
     layers_list=[[]]
     if num_trials<=10:
         mult_val,temp_val=6,5
@@ -193,8 +227,7 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
         trueWidth=barWidth
     else:
         trueWidth=(2/20)*num_trials
-    #32
-    for i in range(1,len(GLOBALS.index_used)+1,1):
+    for i in range(1,len(layers_size_list[0])+1,1):
         layers_list[0]+=[mult_val*i]
 
     for i in range(1,len(layers_size_list),1):
@@ -208,7 +241,7 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold'])+')')
+    plt.title('AdaptiveNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
     if num_trials<=10:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
@@ -224,13 +257,27 @@ def create_layer_plot(file_name,num_trials,path,evo_type):
     plt.savefig(path,bbox_inches='tight')
     return True
 
+def adapted_info_graph(adapted_file_name,num_trials,path,evo_type,specified_epoch):
+    layers_info=pd.read_excel(adapted_file_name) #This file_name is an adapted_blah file_name
+    layers_size_list=[]
+
+    for i in range(len(layers_info.iloc[:,0].to_numpy())):
+        temp=''
+        main=layers_info.iloc[i,1:].to_numpy()
+        for j in main:
+            temp+=j[:]
+        temp=ast.literal_eval(remove_brackets(temp))
+        layers_size_list+=[temp]
+
+    create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch)
+
+
+def trial_info_graph(trial_file_name,num_trials,num_layers, path,evo_type,info,shortcut_indexes,specified_epoch):
+    layers_size_list=get_trial_info(trial_file_name, num_trials, num_layers, specified_epoch,shortcut_indexes,info)
+    create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch)
+
 def even_round(number):
     return int(round(number/2)*2)
-
-
-
-''' [[slope=1, slope=23,slope=1, slope=23,slope=1, slope=23],[slope=1, slope=23,slope=1, slope=23,slope=1, slope=23],.....] '''
-
 
 def adaptive_stop(x_data,y_data,threshold_min,epoch_wait):
     '''From the wth epoch, If there is an increase of x in any of the next y epochs, keep going.
@@ -259,11 +306,6 @@ def slope(y_data,breakpoint):
 def slope_clone(y_data,breakpoint):
     return (y_data[int(breakpoint)]-y_data[0])/(breakpoint)
 
-def our_fit(x_data,y_data):
-    def func(x, a, b, c):
-        return a - (a-b) * np.exp(-c * x)
-    popt, pcov = curve_fit(func, x_data, y_data)
-    return x_data, func(x_data,*popt)
 
 
 def calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
@@ -313,11 +355,24 @@ def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     plt.show()
     return True
 '''
-shortcut_indexes=[7,14,21,28]
+shortcut_indexes=[7,16,29]
 conv_size_list64=[[64,64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64]]
 conv_size_list32=[[32,32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32],[32,32,32,32,32,32]]
 conv_size_list96=[[96,96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96],[96,96,96,96,96,96]]
-conv_size_list128=[[128,128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128],[128,128,128,128,128,128]]
+conv_size_list128=[[86, 80, 86, 68, 86, 74, 86],[684, 132, 162, 132, 138, 132, 126, 132],[1042, 110, 298, 110, 160, 110, 126, 110, 120, 110, 96, 110],[1042, 68, 138, 68, 66, 68]]
 #create_rank_graph(conv_size_list32,shortcut_indexes,path='32.xlsx')
-print(create_rank_graph(conv_size_list64,shortcut_indexes,path='64_0.xlsx'))
-'''
+print(create_rank_graph(conv_size_list128,shortcut_indexes,path='AdaS_adapt_trial=11_net=AdaptiveNet_0.1_dataset=CIFAR10.xlsx'))
+
+shortcut_indexes=[7,16,29]
+output_conv_size_list,mapping_averages=calculate_correct_output_sizes(input_mapping,output_mapping,conv_size_list,shortcut_indexes,threshold,)
+create_layer_plot(file_name,20,'Mapping Condition')
+
+in_a,out_a=create_mc_plot('AdaS_adapt_trial=0_net=AdaptiveNet_0.1_dataset=CIFAR10.xlsx',20,25,19,[5,10,15,20])
+
+print(in_a,'input mapping conditions')
+print(out_a,'output mapping conditions')
+
+in_path='adas_search\\in_mc_graph.png'
+out_path='adas_search\\out_mc_graph.png'
+create_mapping_plot(in_path,in_a,20,'In Mapping Condition')
+create_mapping_plot(out_path,out_a,20,'out Mapping Condition')'''
