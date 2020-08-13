@@ -15,8 +15,9 @@ if __name__ == '__main__':
     args(parser)
     args_true = parser.parse_args()
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0)
+    print(GLOBALS.CONFIG['delta_threshold_values'])
     for i in GLOBALS.CONFIG['delta_threshold_values']: #Where threshold_values is a list of threshold values we want to iterate over?
-
+        GLOBALS.FIRST_INIT = True
         parser = ArgumentParser(description=__doc__)
         args(parser)
         args_true = parser.parse_args()
