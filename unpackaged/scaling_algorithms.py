@@ -110,7 +110,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
         FIRST_TIME = True
         for i in conv_size_list:
             factor_scale.append([GLOBALS.CONFIG['factor_scale']]*len(i))
-            last_operation.append([GLOBALS.CONFIG['last_operation_default']]*len(i))
+            last_operation.append([1]*len(i))
             delta_percentage.append([0]*len(i))
 
     for superblock in range(len(new_channel_sizes)):
