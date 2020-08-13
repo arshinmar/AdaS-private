@@ -15,7 +15,7 @@ full_train_only: False
 init_lr: 0.1
 
 adapt_trials: 2
-epochs_per_trial: 1
+epochs_per_trial: 2
 init_conv_setting: '32,32,32'
 delta_threshold: 0.01
 min_scale_limit: 0.01

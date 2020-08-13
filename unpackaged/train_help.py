@@ -72,7 +72,7 @@ def args(sub_parser: _SubParsersAction):
         help="Flag: CPU bound training")
     sub_parser.set_defaults(cpu=False)
 
-def initialize(args: APNamespace, new_network, beta=None, new_threshold=None):
+def initialize(args: APNamespace, new_network, beta=None, new_threshold=None, scheduler=None):
     def get_loss(loss: str) -> torch.nn.Module:
         return torch.nn.CrossEntropyLoss() if loss == 'cross_entropy' else None
 
@@ -101,7 +101,8 @@ def initialize(args: APNamespace, new_network, beta=None, new_threshold=None):
     with config_path.open() as f:
         GLOBALS.CONFIG = parse_config(yaml.load(f))
 
-
+    if scheduler != None:
+        GLOBALS.CONFIG['lr_scheduler']='StepLR'
     print('~~~GLOBALS.CONFIG:~~~')
     print(GLOBALS.CONFIG)
     print("Adas: Argument Parser Options")
@@ -146,6 +147,7 @@ def initialize(args: APNamespace, new_network, beta=None, new_threshold=None):
                 root=data_path,
                 dataset=GLOBALS.CONFIG['dataset'],
                 mini_batch_size=GLOBALS.CONFIG['mini_batch_size'])
+
     GLOBALS.PERFORMANCE_STATISTICS = {}
     #Gets initial conv size list (string) from config yaml file and converts into int list
     init_conv = [int(conv_size) for conv_size in GLOBALS.CONFIG['init_conv_setting'].split(',')]
@@ -177,17 +179,12 @@ def initialize(args: APNamespace, new_network, beta=None, new_threshold=None):
         GLOBALS.NET_RAW = new_network.cuda()
 
 
-    GLOBALS.METRICS = Metrics(list(GLOBALS.NET.parameters()),
-                                      p=GLOBALS.CONFIG['p'])
-
+    GLOBALS.METRICS = Metrics(list(GLOBALS.NET.parameters()),p=GLOBALS.CONFIG['p'])
     GLOBALS.NET = GLOBALS.NET.to(device)
-
     GLOBALS.CRITERION = get_loss(GLOBALS.CONFIG['loss'])
-
 
     if beta != None:
         GLOBALS.CONFIG['beta']=beta
-
     if new_threshold != None:
         GLOBALS.CONFIG['delta_threshold']=new_threshold
 
@@ -311,10 +308,8 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     parser = ArgumentParser(description=__doc__)
     args(parser)
     args_true = parser.parse_args()
-    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,beta=GLOBALS.CONFIG['beta_full'])
+    train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,beta=GLOBALS.CONFIG['beta_full'],scheduler='StepLR')
 
-    print('Using Early stopping of thresh 0.001')
-    GLOBALS.EARLY_STOP = EarlyStop(patience=int(GLOBALS.CONFIG['early_stop_patience']),threshold=0.001)
     GLOBALS.FULL_TRAIN = True
     GLOBALS.PERFORMANCE_STATISTICS = {}
     GLOBALS.FULL_TRAIN_MODE = 'fresh'
@@ -464,12 +459,28 @@ def run_epochs(trial, epochs, train_loader, test_loader,
                 print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
                 sys.exit()
     else:
-        xlsx_name = \
-            f"{GLOBALS.CONFIG['optim_method']}_" +\
-            f"{GLOBALS.CONFIG['lr_scheduler']}_" +\
-            f"trial={trial}_initlr={GLOBALS.CONFIG['init_lr']}" +\
-            f"net={GLOBALS.CONFIG['network']}_dataset=" +\
-            f"{GLOBALS.CONFIG['dataset']}.xlsx"
+        if GLOBALS.FULL_TRAIN == False:
+            xlsx_name = \
+                f"StepLR_adapt_trial={trial}_" +\
+                f"net={GLOBALS.CONFIG['network']}_" +\
+                f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
+                f"{GLOBALS.CONFIG['dataset']}.xlsx"
+        else:
+            if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
+                xlsx_name = \
+                    f"StepLR_last_iter_fulltrain_trial={trial}_" +\
+                    f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"dataset=" +\
+                    f"{GLOBALS.CONFIG['dataset']}.xlsx"
+            elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
+                xlsx_name = \
+                    f"StepLR_fresh_fulltrain_trial={trial}_" +\
+                    f"net={GLOBALS.CONFIG['network']}_" +\
+                    f"dataset=" +\
+                    f"{GLOBALS.CONFIG['dataset']}.xlsx"
+            else:
+                print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
+                sys.exit()
     xlsx_path = str(output_path) +'\\'+ xlsx_name
 
     if GLOBALS.FULL_TRAIN == False:
@@ -480,12 +491,12 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     else:
         if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
             filename = \
-                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
         elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
             filename = \
-                f"stats_fresh_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+                f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
