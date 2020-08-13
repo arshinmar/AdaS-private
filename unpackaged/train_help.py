@@ -72,7 +72,7 @@ def args(sub_parser: _SubParsersAction):
         help="Flag: CPU bound training")
     sub_parser.set_defaults(cpu=False)
 
-def initialize(args: APNamespace, new_network, beta=None):
+def initialize(args: APNamespace, new_network, beta=None, new_threshold=None):
     def get_loss(loss: str) -> torch.nn.Module:
         return torch.nn.CrossEntropyLoss() if loss == 'cross_entropy' else None
 
@@ -185,13 +185,11 @@ def initialize(args: APNamespace, new_network, beta=None):
     GLOBALS.CRITERION = get_loss(GLOBALS.CONFIG['loss'])
 
 
-    if beta==None:
-        beta_true=GLOBALS.CONFIG['beta']
-    else:
-        beta_true=beta #Beta that you pass in.
+    if beta != None:
+        GLOBALS.CONFIG['beta']=beta
 
-
-    GLOBALS.CONFIG['beta']=beta_true
+    if new_threshold != None:
+        GLOBALS.CONFIG['delta_threshold']=new_threshold
 
 
     optimizer, scheduler = get_optimizer_scheduler(
@@ -363,7 +361,7 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
     return True
 
-def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train):
+def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train, new_threshold=None):
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
     rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
     rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
@@ -411,7 +409,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         parser = ArgumentParser(description=__doc__)
         args(parser)
         args_true = parser.parse_args()
-        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network)
+        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,new_threshold=new_threshold)
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
