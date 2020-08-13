@@ -47,6 +47,7 @@ def get_optimizer_scheduler(
     beta = config['beta']
     zeta = config['zeta']
     print('~~~ BETA USED IN get_optimizer_scheduler: {} ~~~'.format(beta))
+    print('~~~ lr_scheduler USED IN get_optimizer_scheduler: {} ~~~'.format(lr_scheduler))
     optimizer = None
     scheduler = None
     if optim_method == 'SGD':
