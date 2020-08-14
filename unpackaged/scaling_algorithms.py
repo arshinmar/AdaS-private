@@ -81,6 +81,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
+            current_operation=None
             if (delta_percentage[superblock][layer] >= delta_threshold):
                 current_operation = EXPAND
             elif (conv_size_list[superblock][layer] >= 32):
@@ -88,6 +89,9 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
 
             if (mapping_conditions[superblock][layer] >= mapping_threshold) and (conv_size_list[superblock][layer] >= 32):
                 current_operation = SHRINK
+
+            if (current_operation==None):
+                current_operation = EXPAND
 
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
                 if (factor_scale[superblock][layer] < min_scale_limit):
