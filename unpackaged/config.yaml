@@ -14,8 +14,8 @@ full_train_only: False
 
 init_lr: 0.1
 
-adapt_trials: 20
-epochs_per_trial: 20
+adapt_trials: 2
+epochs_per_trial: 1
 init_conv_setting: '32,32,32'
 delta_threshold: 0.01
 min_scale_limit: 0.01
@@ -24,12 +24,12 @@ mapping_condition_threshold: 10
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
-  - 0.01
+  - 0.015
   - 0.015
 
 
 ###### Suggested Default ######
-max_epoch: 250
+max_epoch: 1
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
 early_stop_patience: 10 # epoch window to consider when deciding whether to stop
 mini_batch_size: 128
