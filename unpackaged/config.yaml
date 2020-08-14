@@ -26,9 +26,9 @@ blocks_per_superblock: -1
 delta_threshold_values:
   - 0.01
   - 0.015
-  - 0.0175
   - 0.02
   - 0.025
+  - 0.03
 
 
 ###### Suggested Default ######
