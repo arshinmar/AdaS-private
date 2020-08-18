@@ -14,10 +14,10 @@ full_train_only: False
 
 init_lr: 0.1
 
-adapt_trials: 20
+adapt_trials: 40
 epochs_per_trial: 20
 init_conv_setting: '32,32,32'
-delta_threshold: 0.025
+delta_threshold: 0.01
 min_scale_limit: 0.01
 factor_scale: 0.2
 
@@ -26,7 +26,8 @@ min_conv_size: 16
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
-  - 0.025
+  - 0.01
+  - 0.015
 
 
 ###### Suggested Default ######
