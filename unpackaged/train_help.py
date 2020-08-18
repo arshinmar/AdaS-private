@@ -391,9 +391,9 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         #output_sizes=calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])
         last_operation, factor_scale, output_sizes, delta_percentage, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,GLOBALS.CONFIG['delta_threshold'],GLOBALS.CONFIG['mapping_condition_threshold'],GLOBALS.CONFIG['min_scale_limit'],GLOBALS.CONFIG['adapt_trials'],shortcut_indexes,last_operation, factor_scale, delta_percentage)
         zero_value=True
-        for i in last_operation:
-            for j in i:
-                if j!=0:
+        for blah in last_operation:
+            for inner in blah:
+                if inner!=0:
                     zero_value=False
 
 
