@@ -395,8 +395,6 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
             for inner in blah:
                 if inner!=0:
                     zero_value=False
-
-
         '------------------------------------------------------------------------------------------------------------------------------------------------'
         end=time.time()
         print((end-start),'Time ELAPSED FOR SCALING in TRIAL '+str(i))
