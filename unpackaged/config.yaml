@@ -14,18 +14,19 @@ full_train_only: False
 
 init_lr: 0.1
 
-adapt_trials: 20
-epochs_per_trial: 20
+adapt_trials: 4
+epochs_per_trial: 2
 init_conv_setting: '32,32,32'
-delta_threshold: 0.01
+delta_threshold: 0.025
 min_scale_limit: 0.01
 factor_scale: 0.2
-mapping_condition_threshold: 999
+
+mapping_condition_threshold: 99999
+min_conv_size: 16
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
-  - 0.01
-  - 0.015
+  - 0.025
 
 
 ###### Suggested Default ######
