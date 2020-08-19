@@ -50,8 +50,6 @@ import sys
 sys.path.append("..")
 import global_vars as GLOBALS
 class BasicBlock(nn.Module):
-
-
     def __init__(self, in_planes, intermediate_planes, out_planes,stride=1):
         self.in_planes=in_planes
         self.intermediate_planes=intermediate_planes
@@ -115,6 +113,37 @@ class BasicBlock(nn.Module):
         x = self.relu(x)
         return x
 
+class Bottleneck(nn.Module):
+    expansion = 4
+
+    def __init__(self, in_planes, inter1_planes,inter2_planes,out_planes, stride=1):
+        super(Bottleneck, self).__init__()
+        self.relu=nn.ReLU()
+        self.conv1 = nn.Conv2d(in_planes, inter1_planes, kernel_size=1, bias=False)
+        self.bn1 = nn.BatchNorm2d(inter1_planes)
+        self.conv2 = nn.Conv2d(inter1_planes, inter2_planes, kernel_size=3,
+                               stride=stride, padding=1, bias=False)
+        self.bn2 = nn.BatchNorm2d(inter2_planes)
+        self.conv3 = nn.Conv2d(inter2_planes,
+                               out_planes, kernel_size=1, bias=False)
+        self.bn3 = nn.BatchNorm2d(out_planes)
+
+        self.shortcut = nn.Sequential()
+        if stride != 1 or in_planes != out_planes:
+            self.shortcut = nn.Sequential(
+                nn.Conv2d(in_planes, out_planes,
+                          kernel_size=1, stride=stride, bias=False),
+                nn.BatchNorm2d(out_planes)
+            )
+
+    def forward(self, x):
+        out = self.relu(self.bn1(self.conv1(x)))
+        out = self.relu(self.bn2(self.conv2(out)))
+        out = self.bn3(self.conv3(out))
+        out += self.shortcut(x)
+        out = self.relu(out)
+        return out
+
 class Network(nn.Module):
 
     def __init__(self, block, image_channels=3,new_output_sizes=None,num_classes=10):
@@ -135,8 +164,14 @@ class Network(nn.Module):
         #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
         #self.superblock3_indexes=[256, 256, 64, 64, 64, 64]
         #self.superblock4_indexes=[64, 64, 64, 64, 64, 64]
-        #self.superblock5_indexes=[64, 64, 64, 64, 64, 64]
 
+        # Skip connections for DASNet50 [10,23,42]
+        '''
+        self.superblock1_indexes_50=['32',32,32,'32',32,32,'32',32,32,'32']
+        self.superblock2_indexes_50=[32, 32,'32',32, 32, '32',32, 32, '32',32, 32, '32']
+        self.superblock3_indexes_50=[32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32']
+        self.superblock4_indexes_50=[32,32,'32',32,32,'32',32,32,'32']
+        '''
         if new_output_sizes!=None:
             self.superblock1_indexes=new_output_sizes[0]
             self.superblock2_indexes=new_output_sizes[1]
@@ -176,18 +211,22 @@ class Network(nn.Module):
 
     def _create_network(self,block):
         layers=[]
-        layers.append(block(self.index[0],self.index[1],self.index[2],stride=1))
-        for i in range(2,len(self.index)-2,2):
-            #print(self.index [i],self.index [i+1],self.index [i+2],'for loop ',i)
-            #if (self.index[i]!=self.index[i+2] or self.index[i]!=self.index[i+1]) and output_size>4:
-            if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
-                stride=2
-            else:
-                stride=1
-        #    if i==len(self.index)-4:
-            #    self.linear=nn.Linear(self.index[len(self.index)-2],self.num_classes)
-            layers.append(block(self.index[i],self.index[i+1],self.index[i+2],stride=stride))
-        #    #print(i, 'i')
+        if block==BasicBlock:
+            layers.append(block(self.index[0],self.index[1],self.index[2],stride=1))
+            for i in range(2,len(self.index)-2,2):
+                if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
+                    stride=2
+                else:
+                    stride=1
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],stride=stride))
+        elif block==Bottleneck:
+            layers.append(block(self.index[0],self.index[1],self.index[2],self.index[3],stride=1))
+            for i in range(3,len(self.index)-3,3):
+                if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
+                    stride=2
+                else:
+                    stride=1
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],self.index[i+3],stride=stride))
         #print(len(self.index),'len index')
         return nn.Sequential(*layers)
 
@@ -212,12 +251,15 @@ class Network(nn.Module):
         return x
 
 
-def AdaptiveNet(num_classes = 10,new_output_sizes=None):
+def DASNet34(num_classes = 10,new_output_sizes=None):
     return Network(BasicBlock, 3, num_classes=10, new_output_sizes=new_output_sizes)
+
+def DASNet50(num_classes = 10,new_output_sizes=None):
+    return Network(Bottleneck, 3, num_classes=10, new_output_sizes=new_output_sizes)
 
 def test():
     #writer = SummaryWriter('runs/resnet34_1')
-    net = AdaptiveNet()
+    net = DASNet34()
     y = net(torch.randn(1, 3, 32, 32))
     print(y.size())
 
