@@ -84,10 +84,10 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
             current_operation=EXPAND
             if (delta_percentage[superblock][layer] >= delta_threshold):
                 current_operation = EXPAND
-            elif (conv_size_list[superblock][layer] >= 32):
+            elif (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
                 current_operation = SHRINK
 
-            if (mapping_conditions[superblock][layer] >= mapping_threshold) and (conv_size_list[superblock][layer] >= 32):
+            if (mapping_conditions[superblock][layer] >= mapping_threshold) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
                 current_operation = SHRINK
 
             if (current_operation==None):
@@ -99,6 +99,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
                 factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
 
             last_operation[superblock][layer] = current_operation
+
             new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
 
     print(factor_scale,'FACTOR SCALE')

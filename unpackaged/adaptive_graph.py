@@ -202,7 +202,7 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
         if i%2==0:
             true_temp+=[layers_size_list[i]]
     layers_size_list=true_temp
-    
+
     for i in range(1,len(layers_size_list[0])+1,1):
         layers_list[0]+=[mult_val*i]
 
@@ -213,19 +213,19 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
     colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
     plt.figure()
     for i in range(0,len(layers_size_list),1):
-        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(i+1)))
+        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(2*i+1)))
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
     plt.title('AdaptiveNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
-    if num_trials<=10:
+    if num_trials<=20:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
         plt.xticks([mult_val*r + num_trials*0.3 + 3*num_trials for r in range(len(temp))], [str(i) for i in range(len(temp))])
 
     plt.legend(loc='upper right')
     figure=plt.gcf()
-    if num_trials<=10:
+    if num_trials<=20:
         figure.set_size_inches(11.4, 5.34)
     else:
         figure.set_size_inches(40.4, 5.34)
@@ -308,6 +308,53 @@ def calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     end=time.time()
     print(end-start,'TIME ELAPSED FOR CSL')
     return slope_averages
+
+def stacked_bar_plot(adapted_file_name, path,trial_increment=2):
+    '''
+    sizes_with_trials is a list of lists as follows:
+    sizes_with_trials=[sizes for trial1, sizes for 2, ... sizes for trial N]
+    '''
+    layers_info=pd.read_excel(adapted_file_name) #This file_name is an adapted_blah file_name
+    layers_size_list=[]
+
+    for i in range(len(layers_info.iloc[:,0].to_numpy())):
+        temp=''
+        main=layers_info.iloc[i,1:].to_numpy()
+        for j in main:
+            temp+=j[:]
+        temp=ast.literal_eval(remove_brackets(temp))
+        layers_size_list+=[temp]
+    temp=[]
+    alternate=False
+    sizes_with_trials=[]
+    if trial_increment!=1:
+        for i in range(0,len(layers_size_list),1):
+            if i%trial_increment==0:
+                temp+=[layers_size_list[i]]
+        layers_size_list=temp
+    sizes_with_trials=np.transpose(layers_size_list).tolist()
+
+    x_values=np.arange(len(sizes_with_trials[0]))
+    temp=[0 for i in x_values]
+    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#B6D094','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
+    barWidth=0.5
+    for i in range(0,len(sizes_with_trials),1):
+        if i==0:
+            plt.bar(x_values,sizes_with_trials[i],color=colors[i],width=barWidth)
+        else:
+            #Just for safety
+            plt.bar(x_values,sizes_with_trials[i],bottom=temp, color=str(colors[i]),width=barWidth)
+        temp=np.add(temp,sizes_with_trials[i]).tolist()
+    names=[str(trial_increment*i) for i in range(len(x_values))]
+    names[0]='Baseline'
+    plt.xticks(x_values, names, fontweight='bold')
+    plt.xlabel('Trial Number')
+    plt.ylabel('Cumulative Channel Size')
+    plt.title('ResNet-like Architecture w/Channel Size ='+GLOBALS.CONFIG['init_conv_setting'][:2]+', Threshold='+str(GLOBALS.CONFIG['delta_threshold'])+', MC Threshold='+str(GLOBALS.CONFIG['mapping_condition_threshold']))
+    figure=plt.gcf()
+    figure.set_size_inches(11.4, 5.34)
+    plt.savefig(path,bbox_inches='tight')
+    return True
 
 def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     superblock=1

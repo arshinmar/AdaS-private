@@ -17,10 +17,10 @@ THRESHOLD = 0
 FULL_TRAIN = False
 FULL_TRAIN_MODE = ''
 
-super1_idx = [32,32,32,32,32,32,32]
-super2_idx = [32,32,32,32,32,32,32,32]
-super3_idx = [32,32,32,32,32,32,32,32,32,32,32,32]
-super4_idx = [32,32,32,32,32,32]
+super1_idx = [16,16,16,16,16,16,16]
+super2_idx = [16,16,16,16,16,16,16,16]
+super3_idx = [16,16,16,16,16,16,16,16,16,16,16,16]
+super4_idx = [16,16,16,16,16,16]
 
 OUTPUT_PATH = ''
 index = None
