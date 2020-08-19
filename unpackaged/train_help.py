@@ -364,7 +364,6 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
     plt.clf()
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
     plt.clf()
-
     return True
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train, new_threshold=None):
@@ -421,7 +420,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         new_network=update_network(output_sizes)
 
         if zero_value==True:
-            GLOBALS.CONFIG['num_trials']=i
+            GLOBALS.CONFIG['adapt_trials']=i
             break
 
         print('~~~Initializing the new model~~~')
