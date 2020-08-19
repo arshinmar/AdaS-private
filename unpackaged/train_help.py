@@ -421,7 +421,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         new_network=update_network(output_sizes)
 
         if zero_value==True:
-            GLOBALS.CONFIG['num_trials']=i
+            GLOBALS.CONFIG['adapt_trials']=i
             break
 
         print('~~~Initializing the new model~~~')
