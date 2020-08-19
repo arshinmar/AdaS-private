@@ -39,7 +39,7 @@ from models.mobilenet import MobileNet
 from models.mobilenetv2 import MobileNetV2
 from models.efficientnet import EfficientNetB0
 from models.SqueezeNet import SqueezeNet
-from models.own_network import AdaptiveNet
+from models.own_network import DASNet34, DASNet50
 
 def get_net(network: str, num_classes,init_adapt_conv_size=None) -> torch.nn.Module:
     return VGG('VGG16', num_classes=num_classes) if network == 'VGG16' else \
@@ -57,4 +57,5 @@ def get_net(network: str, num_classes,init_adapt_conv_size=None) -> torch.nn.Mod
         SqueezeNet(num_classes=num_classes) if network == 'SqueezeNet' else \
         EfficientNetB0(
             num_classes=num_classes) if network == 'EfficientNetB0' else \
-        AdaptiveNet(num_classes=num_classes) if network == 'AdaptiveNet' else None
+        DASNet34(num_classes=num_classes) if network == 'DASNet34' else \
+        DASNet50(num_classes=num_classes) if network == 'DASNet50' else None
