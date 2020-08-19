@@ -358,7 +358,6 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure=plt.gcf()
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
-    return True
 
 def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     superblock=1
