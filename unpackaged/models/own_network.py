@@ -160,10 +160,10 @@ class Network(nn.Module):
         self.superblock3_indexes=GLOBALS.super3_idx
         self.superblock4_indexes=GLOBALS.super4_idx
 
-        #self.superblock1_indexes=[64, 2, 64, 2, 64, 2, 64]
-        #self.superblock2_indexes=[2, 128, 2, 128, 2, 128]
-        #self.superblock3_indexes=[256, 256, 64, 64, 64, 64]
-        #self.superblock4_indexes=[64, 64, 64, 64, 64, 64]
+        #self.superblock1_indexes=[30, 30, 30, 38, 30, 32, 30]
+        #self.superblock2_indexes=[200, 62, 118, 62, 88, 62, 80, 62]
+        #self.superblock3_indexes=[136, 54, 164, 54, 110, 54, 44, 54, 34, 54, 34, 54]
+        #self.superblock4_indexes=[30, 34, 50, 34, 36, 34]
 
         # Skip connections for DASNet50 [10,23,42]
         '''

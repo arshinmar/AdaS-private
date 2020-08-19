@@ -82,7 +82,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
             #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
-            current_operation=None
+            current_operation=EXPAND
             if (delta_percentage[superblock][layer] >= delta_threshold):
                 current_operation = EXPAND
             elif (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
