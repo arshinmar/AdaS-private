@@ -309,7 +309,7 @@ def calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     print(end-start,'TIME ELAPSED FOR CSL')
     return slope_averages
 
-def stacked_bar_plot(adapted_file_name, path,trial_increment=2):
+def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     '''
     sizes_with_trials is a list of lists as follows:
     sizes_with_trials=[sizes for trial1, sizes for 2, ... sizes for trial N]
@@ -350,11 +350,10 @@ def stacked_bar_plot(adapted_file_name, path,trial_increment=2):
     plt.xticks(x_values, names, fontweight='bold')
     plt.xlabel('Trial Number')
     plt.ylabel('Cumulative Channel Size')
-    plt.title('ResNet-like Architecture w/Channel Size ='+GLOBALS.CONFIG['init_conv_setting'][:2]+', Threshold='+str(GLOBALS.CONFIG['delta_threshold'])+', MC Threshold='+str(GLOBALS.CONFIG['mapping_condition_threshold']))
+    plt.title('ResNet-like Architecture w/Channel Size = 32, Threshold=0.01, MC Threshold=8')
     figure=plt.gcf()
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
-    return True
 
 def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     superblock=1
