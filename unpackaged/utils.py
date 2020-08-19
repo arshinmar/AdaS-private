@@ -212,7 +212,7 @@ def parse_config(
         'VGG16', 'ResNet34', 'PreActResNet18',
         'GoogLeNet', 'densenet_cifar', 'ResNeXt29_2x64d', 'MobileNet',
         'MobileNetV2', 'DPN92', 'ShuffleNetG2', 'SENet18', 'ShuffleNetV2',
-        'EfficientNetB0','AdaptiveNet']
+        'EfficientNetB0','DASNet34','DASNet50']
     if config['network'] not in valid_models:
         raise ValueError(
             f"config.yaml: unknown model {config['network']}." +

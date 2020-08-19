@@ -16,15 +16,15 @@ from optim.sps import SPS
 from optim import get_optimizer_scheduler
 from early_stop import EarlyStop
 import sys
-from adaptive_channels import prototype
 from adaptive_graph import create_adaptive_graphs,create_plot,adapted_info_graph,trial_info_graph, stacked_bar_plot
 from ptflops import get_model_complexity_info
-from models.own_network import AdaptiveNet
+from models.own_network import DASNet34,DASNet50
 import copy
 import torch
 import torch.backends.cudnn as cudnn
 from scaling_algorithms import *
 import ast
+import matplotlib.pyplot as plt
 
 from utils import parse_config
 from metrics import Metrics
@@ -238,9 +238,10 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
     return new_conv_sizes
 
 def update_network(output_sizes):
-    #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
-    #new_network.load_state_dict(new_model_state_dict)
+
+    #new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+    new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
+
     return new_network
 
 def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path_string_full_train):
@@ -266,7 +267,8 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
 
     return True
-
+'''
+NOT USED
 def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
 
     new_network=update_network(output_sizes)
@@ -296,12 +298,12 @@ def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,ep
         break;
 
     run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
-
+'''
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
-    #torch.save(GLOBALS.NET.state_dict(), 'model_weights/'+'model_state_dict_'+GLOBALS.CONFIG['init_conv_setting']+'_thresh='+str(GLOBALS.CONFIG['adapt_rank_threshold']))
-    #new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    new_network=AdaptiveNet(num_classes=10,new_output_sizes=output_sizes)
-    #new_network.load_state_dict(GLOBALS.NET.state_dict())
+
+    #new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+    new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
+
     GLOBALS.FIRST_INIT = False
 
     #optimizer,scheduler=network_initialize(new_network,train_loader)
@@ -349,14 +351,19 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
             break
         counter+=len(j) + 1
         shortcut_indexes+=[counter]
-
-    adapted_info_graph(adapted_conv_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Layer Size',last_epoch)
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
     plt.clf()
     stacked_bar_plot(adapted_conv_file_name, network_visualize_path)
+    plt.clf()
+    adapted_info_graph(adapted_conv_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Layer Size',last_epoch)
+    plt.clf()
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
+    plt.clf()
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
+    plt.clf()
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
+    plt.clf()
+    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
+    plt.clf()
     return True
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train, new_threshold=None):
@@ -374,16 +381,20 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
     print('~~~First run_epochs done.~~~')
     last_operation,factor_scale,delta_percentage=[],[],[]
+
     for i in range(1,GLOBALS.CONFIG['adapt_trials']):
 
         input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
         counter=-1
-        shortcut_indexes=[]
+        shortcut_indexes=[10,23,42]
+        '''
         for j in conv_size_list:
             if len(shortcut_indexes)==len(conv_size_list)-1:
                 break
             counter+=len(j) + 1
             shortcut_indexes+=[counter]
+        '''
+
         index_conv_size_list=GLOBALS.index
         print('GLOBALS.EXCEL_PATH:{}'.format(GLOBALS.EXCEL_PATH))
         start=time.time()
@@ -396,8 +407,6 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
             for inner in blah:
                 if inner!=0:
                     zero_value=False
-
-
         '------------------------------------------------------------------------------------------------------------------------------------------------'
         end=time.time()
         print((end-start),'Time ELAPSED FOR SCALING in TRIAL '+str(i))
@@ -411,7 +420,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         new_network=update_network(output_sizes)
 
         if zero_value==True:
-            GLOBALS.CONFIG['num_trials']=i
+            GLOBALS.CONFIG['adapt_trials']=i
             break
 
         print('~~~Initializing the new model~~~')

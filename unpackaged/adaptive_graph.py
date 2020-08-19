@@ -147,7 +147,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
     plt.xticks(np.arange(min(epoch_num), max(epoch_num)+1, total_num_epochs))
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
-    plt.title('Dynamic AdaptiveNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
+    plt.title('Dynamic DASNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
     plt.savefig(out_folder+'\\'+'dynamic_accuracy_plot.png',bbox_inches='tight')
     #plt.show()
 
@@ -217,7 +217,7 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
-    plt.title('AdaptiveNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
+    plt.title('DASNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
     if num_trials<=20:
         plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
     else:
@@ -226,9 +226,9 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
     plt.legend(loc='upper right')
     figure=plt.gcf()
     if num_trials<=20:
-        figure.set_size_inches(11.4, 5.34)
+        figure.set_size_inches(15.4, 5.34)
     else:
-        figure.set_size_inches(40.4, 5.34)
+        figure.set_size_inches(45.4, 5.34)
     #addition=str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])
     plt.savefig(path,bbox_inches='tight')
     return True
@@ -336,21 +336,25 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
 
     x_values=np.arange(len(sizes_with_trials[0]))
     temp=[0 for i in x_values]
-    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#B6D094','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
+    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#B6D094','#4d4d4e','#b51b1b','#1f639b',
+            '#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5',
+            '#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e',
+            '#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5',
+            '#fcb045','#B6D094','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#B6D094']
     barWidth=0.5
     for i in range(0,len(sizes_with_trials),1):
         if i==0:
             plt.bar(x_values,sizes_with_trials[i],color=colors[i],width=barWidth)
         else:
-            #Just for safety
             plt.bar(x_values,sizes_with_trials[i],bottom=temp, color=str(colors[i]),width=barWidth)
-        temp=np.add(temp,sizes_with_trials[i]).tolist()
+            temp=np.add(temp,sizes_with_trials[i]).tolist()
     names=[str(trial_increment*i) for i in range(len(x_values))]
     names[0]='Baseline'
     plt.xticks(x_values, names, fontweight='bold')
     plt.xlabel('Trial Number')
     plt.ylabel('Cumulative Channel Size')
-    plt.title('ResNet-like Architecture w/Channel Size = 32, Threshold=0.01, MC Threshold=8')
+    plt.title('ResNet-like Architecture w/Channel Size ='+GLOBALS.CONFIG['init_conv_setting'][:2]+', Threshold='+str(GLOBALS.CONFIG['delta_threshold'])+', MC Threshold='+str(GLOBALS.CONFIG['mapping_condition_threshold']))
+    #plt.title('ResNet-like Architecture w/Channel Size =443, Threshold=, MC Threshold=')
     figure=plt.gcf()
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
@@ -376,6 +380,8 @@ def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
     plt.show()
     return True
+
+
 '''
 shortcut_indexes=[7,16,29]
 conv_size_list64=[[64,64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64],[64,64,64,64,64,64]]
