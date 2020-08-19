@@ -196,6 +196,13 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
         trueWidth=barWidth
     else:
         trueWidth=(2/20)*num_trials
+
+    true_temp=[]
+    for i in range(0,len(layers_size_list),1):
+        if i%2==0:
+            true_temp+=[layers_size_list[i]]
+    layers_size_list=true_temp
+    
     for i in range(1,len(layers_size_list[0])+1,1):
         layers_list[0]+=[mult_val*i]
 
