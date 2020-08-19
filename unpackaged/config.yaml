@@ -21,7 +21,7 @@ delta_threshold: 0.03
 min_scale_limit: 0.01
 factor_scale: 0.2
 
-mapping_condition_threshold: 99999
+mapping_condition_threshold: 13
 
 min_conv_size: 16
 
