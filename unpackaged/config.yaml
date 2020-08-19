@@ -27,7 +27,7 @@ stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
   - 0.03
-  - 0.035
+  - 0.01
 
 ###### Suggested Default ######
 max_epoch: 250
