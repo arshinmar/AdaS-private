@@ -355,6 +355,7 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
+    plt.clf()
     stacked_bar_plot(adapted_conv_file_name, network_visualize_path)
     return True
 
