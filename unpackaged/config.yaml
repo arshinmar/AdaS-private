@@ -1,6 +1,6 @@
 ###### Application Specific ######
 dataset: 'CIFAR10' # options: CIFAR100, CIFAR10, ImageNet
-network: 'AdaptiveNet' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
+network: 'DASNet50' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
 optim_method: 'SGD' # options: SGD, AdaM, AdaGrad, RMSProp, AdaDelta
 lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRestarts, OneCycleLR
 
@@ -16,18 +16,17 @@ init_lr: 0.1
 
 adapt_trials: 40
 epochs_per_trial: 20
-init_conv_setting: '32,32,32'
+init_conv_setting: '16,16,16'
 delta_threshold: 0.01
 min_scale_limit: 0.01
 factor_scale: 0.2
 
-mapping_condition_threshold: 99999
+mapping_condition_threshold: 13
 min_conv_size: 16
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
   - 0.01
-  - 0.015
 
 
 ###### Suggested Default ######
