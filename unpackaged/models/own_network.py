@@ -252,9 +252,11 @@ class Network(nn.Module):
 
 
 def DASNet34(num_classes = 10,new_output_sizes=None):
+    GLOBALS.BLOCK_TYPE=='BasicBlock'
     return Network(BasicBlock, 3, num_classes=10, new_output_sizes=new_output_sizes)
 
 def DASNet50(num_classes = 10,new_output_sizes=None):
+    GLOBALS.BLOCK_TYPE=='Bottleneck'
     return Network(Bottleneck, 3, num_classes=10, new_output_sizes=new_output_sizes)
 
 def test():
