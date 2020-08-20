@@ -47,10 +47,9 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
     input_ranks_final,output_ranks_final = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     input_ranks_stable,output_ranks_stable = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
     in_conditions,out_conditions = get_info('condition',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
-    rank_averages_final=calculate_correct_output_sizes_50(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
-
-    rank_averages_stable=calculate_correct_output_sizes_50(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
-
+    rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
+    rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
+    print(rank_averages_final,'~~~ RANK AVERAGES FINAL ~~~')
     mapping_conditions=convert_format(out_conditions,shortcut_indexes)
     mapping_conditions[0] = [out_conditions[0]]+mapping_conditions[0]
 
@@ -76,7 +75,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
             yaxis=[]
             for k in range(GLOBALS.CONFIG['epochs_per_trial']):
                 input_ranks,output_ranks=get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
-                rank_averages=calculate_correct_output_sizes_50(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+                rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
                 yaxis+=[rank_averages[superblock][layer]]
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
@@ -150,22 +149,12 @@ def convert_format(full_list, temp_shortcut_indexes):
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
     #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
-    '''
-    input_ranks_layer_1, output_ranks_layer_1 = input_ranks[0], output_ranks[0]
-
-    input_ranks_superblock_1, output_ranks_superblock_1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
-    input_ranks_superblock_2, output_ranks_superblock_2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
-    input_ranks_superblock_3, output_ranks_superblock_3 = input_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]], output_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]]
-    input_ranks_superblock_4, output_ranks_superblock_4 = input_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]
-    input_ranks_superblock_5, output_ranks_superblock_5 = input_ranks[shortcut_indexes[3]+1:], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]'''
 
     new_input_ranks=[]
     new_output_ranks=[]
 
     new_input_ranks=convert_format(input_ranks,shortcut_indexes)
     new_output_ranks=convert_format(output_ranks,shortcut_indexes)
-
-
 
     #new_input_ranks = [input_ranks_superblock_1] + [input_ranks_superblock_2] + [input_ranks_superblock_3] + [input_ranks_superblock_4] + [input_ranks_superblock_5]
     #new_output_ranks = [output_ranks_superblock_1] + [output_ranks_superblock_2] + [output_ranks_superblock_3] + [output_ranks_superblock_4] + [output_ranks_superblock_5]
@@ -178,6 +167,13 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     block_averages_output=[]
     grey_list_input=[]
     grey_list_output=[]
+    increment = 0
+    if GLOBALS.BLOCK_TYPE=='BasicBlock':
+        increment=2
+    elif GLOBALS.BLOCK_TYPE=='Bottleneck':
+        increment=3
+
+    print(increment, 'INCREMENT')
 
     for i in range(0,len(new_input_ranks),1):
         block_averages+=[[]]
@@ -186,94 +182,22 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         grey_list_input+=[[]]
         grey_list_output+=[[]]
         temp_counter=0
-        for j in range(1,len(new_input_ranks[i]),2):
+
+        for j in range(1,len(new_input_ranks[i]),increment):
+
             block_averages_input[i]=block_averages_input[i]+[new_input_ranks[i][j]]
+            if GLOBALS.BLOCK_TYPE=='Bottleneck':
+                block_averages_input[i]=block_averages_input[i]+[new_input_ranks[i][j+1]]
             block_averages_output[i]=block_averages_output[i]+[new_output_ranks[i][j-1]]
 
-            grey_list_input[i]=grey_list_input[i]+[new_input_ranks[i][j-1]]
-            grey_list_output[i]=grey_list_output[i]+[new_output_ranks[i][j]]
-
-        block_averages_input[i]=block_averages_input[i]+[np.average(np.array(grey_list_input[i]))]
-        block_averages_output[i]=block_averages_output[i]+[np.average(np.array(grey_list_output[i]))]
-        block_averages[i]=np.average(np.array([block_averages_input[i],block_averages_output[i]]),axis=0)
-
-    #print(conv_size_list,'CONV SIZE LIST')
-    output_conv_size_list=copy.deepcopy(conv_size_list)
-    rank_averages = copy.deepcopy(conv_size_list)
-
-    #block_averages=[[avg for intermediate_planes, avg for in]]
-    for i in range(0,len(block_averages)):
-        for j in range(0,len(conv_size_list[i])):
-            if (i==0):
-                if (j%2==0):
-                    scaling_factor=block_averages[i][-1]-threshold
-                else:
-                    scaling_factor=block_averages[i][int((j-1)/2)]-threshold
+            if GLOBALS.BLOCK_TYPE=='Bottleneck':
+                block_averages_output[i]=block_averages_output[i]+[new_output_ranks[i][j]]
+                grey_list_output[i]=grey_list_output[i]+[new_output_ranks[i][j+1]]
             else:
-                if (j%2==1):
-                    scaling_factor=block_averages[i][-1]-threshold
-                else:
-                    scaling_factor=block_averages[i][int(j/2)]-threshold
-            output_conv_size_list[i][j]=even_round(output_conv_size_list[i][j]*(1+scaling_factor))
-            rank_averages[i][j] = scaling_factor + threshold
-
-    if final==True:
-
-        GLOBALS.super1_idx = output_conv_size_list[0]
-        GLOBALS.super2_idx = output_conv_size_list[1]
-        GLOBALS.super3_idx = output_conv_size_list[2]
-        GLOBALS.super4_idx = output_conv_size_list[3]
-        GLOBALS.index = output_conv_size_list[0] + output_conv_size_list[1] + output_conv_size_list[2] + output_conv_size_list[3]
-
-    #print(output_conv_size_list,'OUTPUT CONV SIZE LIST')
-    return output_conv_size_list, rank_averages
-
-def calculate_correct_output_sizes_50(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
-    #Note that input_ranks/output_ranks may have a different size than conv_size_list
-    #threshold=GLOBALS.CONFIG['adapt_rank_threshold']
-    '''
-    input_ranks_layer_1, output_ranks_layer_1 = input_ranks[0], output_ranks[0]
-
-    input_ranks_superblock_1, output_ranks_superblock_1 = input_ranks[1:shortcut_indexes[0]], output_ranks[1:shortcut_indexes[0]]
-    input_ranks_superblock_2, output_ranks_superblock_2 = input_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]], output_ranks[shortcut_indexes[0]+1:shortcut_indexes[1]]
-    input_ranks_superblock_3, output_ranks_superblock_3 = input_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]], output_ranks[shortcut_indexes[1]+1:shortcut_indexes[2]]
-    input_ranks_superblock_4, output_ranks_superblock_4 = input_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]
-    input_ranks_superblock_5, output_ranks_superblock_5 = input_ranks[shortcut_indexes[3]+1:], output_ranks[shortcut_indexes[2]+1:shortcut_indexes[3]]'''
-
-    new_input_ranks=[]
-    new_output_ranks=[]
-
-    new_input_ranks=convert_format(input_ranks,shortcut_indexes)
-    new_output_ranks=convert_format(output_ranks,shortcut_indexes)
-
-    #new_input_ranks = [input_ranks_superblock_1] + [input_ranks_superblock_2] + [input_ranks_superblock_3] + [input_ranks_superblock_4] + [input_ranks_superblock_5]
-    #new_output_ranks = [output_ranks_superblock_1] + [output_ranks_superblock_2] + [output_ranks_superblock_3] + [output_ranks_superblock_4] + [output_ranks_superblock_5]
-
-    #print(new_input_ranks,'INPUT RANKS WITHOUT SHORTCUTS')
-    #print(new_output_ranks,'OUTPUT RANKS WITHOUT SHORTCUTS')
-
-    block_averages=[]
-    block_averages_input=[]
-    block_averages_output=[]
-    grey_list_input=[]
-    grey_list_output=[]
-
-    for i in range(0,len(new_input_ranks),1):
-        block_averages+=[[]]
-        block_averages_input+=[[]]
-        block_averages_output+=[[]]
-        grey_list_input+=[[]]
-        grey_list_output+=[[]]
-        temp_counter=0
-        for j in range(1,len(new_input_ranks[i]),3):
-            block_averages_input[i]=block_averages_input[i]+[new_input_ranks[i][j]]
-            block_averages_input[i]=block_averages_input[i]+[new_input_ranks[i][j+1]]
-
-            block_averages_output[i]=block_averages_output[i]+[new_output_ranks[i][j-1]]
-            block_averages_output[i]=block_averages_output[i]+[new_output_ranks[i][j]]
+                grey_list_output[i]=grey_list_output[i]+[new_output_ranks[i][j]]
 
             grey_list_input[i]=grey_list_input[i]+[new_input_ranks[i][j-1]]
-            grey_list_output[i]=grey_list_output[i]+[new_output_ranks[i][j+1]]
+
 
         block_averages_input[i]=block_averages_input[i]+[np.average(np.array(grey_list_input[i]))]
         block_averages_output[i]=block_averages_output[i]+[np.average(np.array(grey_list_output[i]))]
@@ -288,17 +212,18 @@ def calculate_correct_output_sizes_50(input_ranks,output_ranks,conv_size_list,sh
     self.superblock3_indexes_50=[32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32']
     self.superblock4_indexes_50=[32,32,'32',32,32,'32',32,32,'32']
     '''
+
     count=0
     for i in range(0,len(block_averages)):
         for j in range(0,len(conv_size_list[i])):
             if (i==0):
-                if (j%3==0):
+                if (j%increment==0):
                     scaling_factor=block_averages[i][-1]-threshold
                 else:
                     scaling_factor=block_averages[i][count]-threshold
                     count+=1
             else:
-                if ((j+1)%3==0):
+                if ((j+1)%increment==0):
                     scaling_factor=block_averages[i][-1]-threshold
                 else:
                     scaling_factor=block_averages[i][count]-threshold
