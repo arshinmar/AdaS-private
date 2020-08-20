@@ -238,10 +238,11 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
     return new_conv_sizes
 
 def update_network(output_sizes):
-
     #new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
-    new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
-
+    if GLOBALS.CONFIG['network']=='DASNet34':
+        new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+    elif GLOBALS.CONFIG['network']=='DASNet50':
+        new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
     return new_network
 
 def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path_string_full_train):
@@ -267,42 +268,13 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
 
     return True
-'''
-NOT USED
-def run_saved_weights_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
 
-    new_network=update_network(output_sizes)
-    new_model_state_dict = prototype(GLOBALS.NET.state_dict(),output_sizes)
-    #new_model_state_dict = prototype(torch.load('model_weights'+'\\'+'model_state_dict_32,32,32,32,32_thresh=0.3'),output_sizes)
-    new_network=AdaptiveNet(num_classes=10, new_output_sizes=output_sizes)
-    new_network.load_state_dict(new_model_state_dict)
-
-    optimizer,scheduler=network_initialize(new_network,train_loader)
-
-    print('Using Early stopping of thresh 0.001')
-    GLOBALS.EARLY_STOP = EarlyStop(
-            patience=int(GLOBALS.CONFIG['early_stop_patience']),
-            threshold=0.001)
-    GLOBALS.CONFIG['beta'] = 0.95
-    GLOBALS.FULL_TRAIN = True
-    GLOBALS.FULL_TRAIN_MODE = 'last_trial'
-    GLOBALS.EXCEL_PATH = ''
-    GLOBALS.PERFORMANCE_STATISTICS = {}
-
-    for param_tensor in GLOBALS.NET.state_dict():
-        val=param_tensor.find('bn')
-        if val==-1:
-            continue
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor].size(), 'OLD NETWORK FULL TRAIN')
-        print(param_tensor, "\t", GLOBALS.NET.state_dict()[param_tensor], 'OLD NETWORK FULL TRAIN')
-        break;
-
-    run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_fulltrain)
-'''
 def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
 
-    #new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
-    new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
+    if GLOBALS.CONFIG['network']=='DASNet34':
+        new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+    elif GLOBALS.CONFIG['network']=='DASNet50':
+        new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
 
     GLOBALS.FIRST_INIT = False
 
@@ -386,14 +358,14 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
         input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
         counter=-1
-        shortcut_indexes=[10,23,42]
-        '''
+        shortcut_indexes=[]
+
         for j in conv_size_list:
             if len(shortcut_indexes)==len(conv_size_list)-1:
                 break
             counter+=len(j) + 1
             shortcut_indexes+=[counter]
-        '''
+
 
         index_conv_size_list=GLOBALS.index
         print('GLOBALS.EXCEL_PATH:{}'.format(GLOBALS.EXCEL_PATH))

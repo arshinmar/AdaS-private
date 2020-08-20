@@ -198,7 +198,6 @@ class Network(nn.Module):
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
 
-        print(self.index,'NETWORK INITIALIZED WITH THESE OUTPUT SIZES - CHECK')
 
         self.num_classes=num_classes
         self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
@@ -252,9 +251,13 @@ class Network(nn.Module):
 
 
 def DASNet34(num_classes = 10,new_output_sizes=None):
+    GLOBALS.BLOCK_TYPE='BasicBlock'
+    print('SETTING BLOCK_TYPE TO BasicBlock')
     return Network(BasicBlock, 3, num_classes=10, new_output_sizes=new_output_sizes)
 
 def DASNet50(num_classes = 10,new_output_sizes=None):
+    GLOBALS.BLOCK_TYPE='Bottleneck'
+    print('SETTING BLOCK_TYPE TO Bottleneck')
     return Network(Bottleneck, 3, num_classes=10, new_output_sizes=new_output_sizes)
 
 def test():
