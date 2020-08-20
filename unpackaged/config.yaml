@@ -1,6 +1,6 @@
 ###### Application Specific ######
 dataset: 'CIFAR10' # options: CIFAR100, CIFAR10, ImageNet
-network: 'DASNet50' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
+network: 'DASNet34' # options: VGG166, DPN92, SENet18, densenet_cifar, GoogLeNet, ShuffleNetG2, ShuffleNetV2, ResNet34, ResNeXt29_2x64d, PreActResNet18, MobileNet, MobileNetV2, SqueezeNet, EfficientNetB0
 optim_method: 'SGD' # options: SGD, AdaM, AdaGrad, RMSProp, AdaDelta
 lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRestarts, OneCycleLR
 
@@ -11,24 +11,26 @@ n_trials: 1
 beta: 0.7
 beta_full: 0.95
 full_train_only: False
-
 init_lr: 0.1
 
-adapt_trials: 40
+adapt_trials: 35
 epochs_per_trial: 20
 init_conv_setting: '16,16,16'
-delta_threshold: 0.03
+delta_threshold: 0.01
 min_scale_limit: 0.01
 factor_scale: 0.2
 
-mapping_condition_threshold: 13
+mapping_condition_threshold: 10
 min_conv_size: 16
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
+  - 0.01
+  - 0.015
+  - 0.02
+  - 0.025
   - 0.03
   - 0.035
-
 ###### Suggested Default ######
 max_epoch: 250
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
