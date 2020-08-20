@@ -259,7 +259,7 @@ def DASNet50(num_classes = 10,new_output_sizes=None):
 
 def test():
     #writer = SummaryWriter('runs/resnet34_1')
-    net = DASNet34()
+    net = DASNet50()
     y = net(torch.randn(1, 3, 32, 32))
     print(y.size())
 
@@ -277,4 +277,4 @@ def test():
     torch.onnx.export(net, dummy_input, "model.onnx")
 
 
-#test()
+test()
