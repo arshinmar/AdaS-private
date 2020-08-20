@@ -14,7 +14,7 @@ full_train_only: False
 
 init_lr: 0.1
 
-adapt_trials: 30
+adapt_trials: 35
 epochs_per_trial: 20
 init_conv_setting: '32,32,32'
 delta_threshold: 0.035
