@@ -49,7 +49,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
     in_conditions,out_conditions = get_info('condition',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
     rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
-
+    print(rank_averages_final,'~~~ RANK AVERAGES FINAL ~~~')
     mapping_conditions=convert_format(out_conditions,shortcut_indexes)
     mapping_conditions[0] = [out_conditions[0]]+mapping_conditions[0]
 
@@ -167,6 +167,13 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     block_averages_output=[]
     grey_list_input=[]
     grey_list_output=[]
+    increment = 0
+    if GLOBALS.BLOCK_TYPE=='BasicBlock':
+        increment=2
+    elif GLOBALS.BLOCK_TYPE=='Bottleneck':
+        increment=3
+
+    print(increment, 'INCREMENT')
 
     for i in range(0,len(new_input_ranks),1):
         block_averages+=[[]]
@@ -175,11 +182,6 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         grey_list_input+=[[]]
         grey_list_output+=[[]]
         temp_counter=0
-
-        if GLOBALS.BLOCK_TYPE=='BasicBlock':
-            increment=2
-        else:
-            increment=3
 
         for j in range(1,len(new_input_ranks[i]),increment):
 
@@ -210,6 +212,7 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
     self.superblock3_indexes_50=[32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32']
     self.superblock4_indexes_50=[32,32,'32',32,32,'32',32,32,'32']
     '''
+
     count=0
     for i in range(0,len(block_averages)):
         for j in range(0,len(conv_size_list[i])):
