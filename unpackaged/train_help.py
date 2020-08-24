@@ -416,7 +416,7 @@ def create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data
     rank_final_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_final.xlsx')
     rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
     create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
-    torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
+    #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
     outputs=pd.read_excel(file_name)
