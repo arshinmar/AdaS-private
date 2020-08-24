@@ -21,6 +21,6 @@ unpackaged/adas_search/conv_32,32,32_deltaThresh=0.015_minScaleLimit=0.01_beta=0
 unpackaged/adas_search/conv_32,32,32_deltaThresh=0.01_minScaleLimit=0.01_beta=0.7_epochpert=1_adaptnum=2/model_weights/model_state_dict
 unpackaged/adas_search/conv_32,32,32_deltaThresh=0.01_minScaleLimit=0.01_beta=0.7_epochpert=2_adaptnum=2/model_weights/model_state_dict
 unpackaged/.DS_Store
-unpackaged/models/.DS_Store
 .DS_Store
 .DS_Store
+unpackaged/.DS_Store
