@@ -178,6 +178,7 @@ def get_trial_info(file_name,num_trials,num_layers,specified_epoch, skip_connect
         final_output.append([])
     for i in range(0,num_trials):
         dfs=pd.read_excel(adaptive_set[i])
+        #print(dfs)
         for j in range(0,num_layers):
             if (j in skip_connections):
                 continue
@@ -359,17 +360,25 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
 
-def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
-    superblock=1
-    layer=0
-    epoch_num=[i for i in range(20)]
+def create_rank_graph(file_name,shortcut_indexes):
+    #superblock=4
+    layer=15
+    num_epochs=20
+    epoch_num=[i for i in range(num_epochs)]
     yaxis=[]
-    for k in range(20):
-        input_ranks,output_ranks=get_ranks(path=path,epoch_number=k)
-        rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
-        yaxis+=[rank_averages[superblock][layer]]
+    for k in range(num_epochs):
 
-    print(yaxis,'YAXIS VALUES')
+        data=get_trial_info(file_name,1,36,k, shortcut_indexes,'mode12_rank_epoch_')[0]
+        #print(len(data),'DATA')
+
+        #data=[1,2,3,4,5,6,7,8,9,10,11,....,numlayers]
+
+        #rank_averages=calculate[5,10,15,20]_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+        #yaxis+=[rank_averages[superblock][layer]]
+        yaxis+=[data[layer]]
+
+
+    #print(yaxis,'YAXIS VALUES')
     break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
 
     fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
@@ -381,6 +390,8 @@ def create_rank_graph(conv_size_list, shortcut_indexes,path=GLOBALS.EXCEL_PATH):
     plt.show()
     return True
 
+
+#create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
 
 '''
 shortcut_indexes=[7,16,29]

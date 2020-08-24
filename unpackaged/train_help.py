@@ -594,20 +594,26 @@ def epoch_iteration(trial, train_loader, test_loader, epoch: int,
         io_metrics.input_channel_S
     GLOBALS.PERFORMANCE_STATISTICS[f'out_S_epoch_{epoch}'] = \
         io_metrics.output_channel_S
+    GLOBALS.PERFORMANCE_STATISTICS[f'mode12_S_epoch_{epoch}'] = \
+        io_metrics.mode_12_channel_S
     GLOBALS.PERFORMANCE_STATISTICS[f'fc_S_epoch_{epoch}'] = \
         io_metrics.fc_S
     GLOBALS.PERFORMANCE_STATISTICS[f'in_rank_epoch_{epoch}'] = \
         io_metrics.input_channel_rank
     GLOBALS.PERFORMANCE_STATISTICS[f'out_rank_epoch_{epoch}'] = \
         io_metrics.output_channel_rank
+    GLOBALS.PERFORMANCE_STATISTICS[f'mode12_rank_epoch_{epoch}'] = \
+        io_metrics.mode_12_channel_rank
     GLOBALS.PERFORMANCE_STATISTICS[f'fc_rank_epoch_{epoch}'] = \
         io_metrics.fc_rank
     GLOBALS.PERFORMANCE_STATISTICS[f'in_condition_epoch_{epoch}'] = \
         io_metrics.input_channel_condition
-
     GLOBALS.PERFORMANCE_STATISTICS[f'out_condition_epoch_{epoch}'] = \
         io_metrics.output_channel_condition
+    GLOBALS.PERFORMANCE_STATISTICS[f'mode12_condition_epoch_{epoch}'] = \
+        io_metrics.mode_12_channel_condition
     # if GLOBALS.ADAS is not None:
+
     if isinstance(scheduler, AdaS):
         lrmetrics = scheduler.step(epoch, GLOBALS.METRICS)
         GLOBALS.PERFORMANCE_STATISTICS[f'rank_velocity_epoch_{epoch}'] = \
