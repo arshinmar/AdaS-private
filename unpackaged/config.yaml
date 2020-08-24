@@ -13,24 +13,20 @@ beta_full: 0.95
 full_train_only: False
 init_lr: 0.1
 
-adapt_trials: 35
-epochs_per_trial: 20
-init_conv_setting: '64,64,64'
-delta_threshold: 0.01
+adapt_trials: 1
+epochs_per_trial: 15
+init_conv_setting: '32,32,32,9'
+delta_threshold: 0.02
 min_scale_limit: 0.01
 factor_scale: 0.2
 
-mapping_condition_threshold: 10
-min_conv_size: 16
+mapping_condition_threshold: 13
+min_conv_size: 32
 stable_epoch: 0
 blocks_per_superblock: -1
 delta_threshold_values:
-  - 0.01
-  - 0.015
   - 0.02
-  - 0.025
-  - 0.03
-  - 0.035
+
 ###### Suggested Default ######
 max_epoch: 250
 early_stop_threshold: -1 # set to -1 if you wish not to use early stop, or equally, set to a high value. Set to -1 if not using AdaS
