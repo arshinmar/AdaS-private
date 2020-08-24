@@ -50,7 +50,7 @@ import sys
 sys.path.append("..")
 import global_vars as GLOBALS
 class BasicBlock(nn.Module):
-    def __init__(self, in_planes, intermediate_planes, out_planes,stride=1):
+    def __init__(self, in_planes, intermediate_planes, out_planes,filter_size_1=3,filter_size_2=3,stride=1):
         self.in_planes=in_planes
         self.intermediate_planes=intermediate_planes
         self.out_planes=out_planes
@@ -64,18 +64,18 @@ class BasicBlock(nn.Module):
         self.conv1=nn.Conv2d(
                 in_planes,
                 intermediate_planes,
-                kernel_size=3,
+                filter_size=filter_size_1,
                 stride=stride,
-                padding=1,
+                padding=int((filter_size_1-1)/2),
                 bias=False
         )
         self.bn1=nn.BatchNorm2d(intermediate_planes)
         self.conv2=nn.Conv2d(
                 intermediate_planes,
                 out_planes,
-                kernel_size=3,
+                filter_size=filter_size_2,
                 stride=1,
-                padding=1,
+                padding=int((filter_size_2-1)/2),
                 bias=False
         )
         self.bn2=nn.BatchNorm2d(out_planes)
@@ -87,7 +87,7 @@ class BasicBlock(nn.Module):
                 nn.Conv2d(
                         in_planes,
                         out_planes,
-                        kernel_size=1,
+                        filter_size=1,
                         stride=stride,
                         bias=False
                 ),
@@ -116,23 +116,24 @@ class BasicBlock(nn.Module):
 class Bottleneck(nn.Module):
     expansion = 4
 
-    def __init__(self, in_planes, inter1_planes,inter2_planes,out_planes, stride=1):
+    def __init__(self, in_planes, inter1_planes,inter2_planes,out_planes,
+                 filter_size_1=1,filter_size_2=3,filter_size_3=1,stride=1):
         super(Bottleneck, self).__init__()
         self.relu=nn.ReLU()
-        self.conv1 = nn.Conv2d(in_planes, inter1_planes, kernel_size=1, bias=False)
+        self.conv1 = nn.Conv2d(in_planes, inter1_planes, filter_size=filter_size_1, padding=int((filter_size_1-1)/2), bias=False)
         self.bn1 = nn.BatchNorm2d(inter1_planes)
-        self.conv2 = nn.Conv2d(inter1_planes, inter2_planes, kernel_size=3,
-                               stride=stride, padding=1, bias=False)
+        self.conv2 = nn.Conv2d(inter1_planes, inter2_planes, filter_size=filter_size_2,
+                               stride=stride, padding=int((filter_size_2-1)/2), bias=False)
         self.bn2 = nn.BatchNorm2d(inter2_planes)
         self.conv3 = nn.Conv2d(inter2_planes,
-                               out_planes, kernel_size=1, bias=False)
+                               out_planes, filter_size=filter_size_3, padding=int((filter_size_3-1)/2), bias=False)
         self.bn3 = nn.BatchNorm2d(out_planes)
 
         self.shortcut = nn.Sequential()
         if stride != 1 or in_planes != out_planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, out_planes,
-                          kernel_size=1, stride=stride, bias=False),
+                          filter_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_planes)
             )
 
@@ -146,7 +147,7 @@ class Bottleneck(nn.Module):
 
 class Network(nn.Module):
 
-    def __init__(self, block, image_channels=3,new_output_sizes=None,num_classes=10):
+    def __init__(self, block, image_channels=3,new_output_sizes=None,new_filter_sizes=None,num_classes=10):
         super(Network, self).__init__()
 
         ################################################################################## AdaS ##################################################################################
@@ -155,10 +156,26 @@ class Network(nn.Module):
         self.shortcut_3_index = 21 #Number on excel corresponding to shortcut 2
         self.shortcut_4_index = 28'''
         ####################### O% ########################
+
+        #self.superblock1_filters=[3,3,3,3,3,3]
+        #self.superblock2_filters=[3,3,3,3,3,3,3,3]
+        #self.superblock3_filters=[3,3,3,3,3,3,3,3,3,3,3,3]
+        #self.superblock4_filters=[3,3,3,3,3,3]
+
+        #self.superblock1_filters=[1,3,1,1,3,1,1,3,1]
+        #self.superblock2_filters=[1,3,1,1,3,1,1,3,1,1,3,1]
+        #self.superblock3_filters=[1,3,1,1,3,1,1,3,1,1,3,1,1,3,1,1,3,1]
+        #self.superblock4_filters=[1,3,1,1,3,1,1,3,1]
+
         self.superblock1_indexes=GLOBALS.super1_idx
         self.superblock2_indexes=GLOBALS.super2_idx
         self.superblock3_indexes=GLOBALS.super3_idx
         self.superblock4_indexes=GLOBALS.super4_idx
+
+        self.superblock1_filters=GLOBALS.super1_filter_idx
+        self.superblock2_filters=GLOBALS.super2_filter_idx
+        self.superblock3_filters=GLOBALS.super3_filter_idx
+        self.superblock4_filters=GLOBALS.super4_filter_idx
 
         #self.superblock1_indexes=[30, 30, 30, 38, 30, 32, 30]
         #self.superblock2_indexes=[200, 62, 118, 62, 88, 62, 80, 62]
@@ -172,11 +189,17 @@ class Network(nn.Module):
         self.superblock3_indexes_50=[32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32',32,32,'32']
         self.superblock4_indexes_50=[32,32,'32',32,32,'32',32,32,'32']
         '''
+
         if new_output_sizes!=None:
             self.superblock1_indexes=new_output_sizes[0]
             self.superblock2_indexes=new_output_sizes[1]
             self.superblock3_indexes=new_output_sizes[2]
             self.superblock4_indexes=new_output_sizes[3]
+        if new_filter_sizes!=None:
+            self.superblock1_filters=new_filter_sizes[0]
+            self.superblock2_filters=new_filter_sizes[1]
+            self.superblock3_filters=new_filter_sizes[2]
+            self.superblock4_filters=new_filter_sizes[3]
 
         shortcut_indexes=[]
         counter=-1
@@ -197,34 +220,38 @@ class Network(nn.Module):
         self.shortcut_3_index = shortcut_indexes[2]
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
+        self.filter_sizes=self.superblock1_filters+self.superblock2_filters+self.superblock3_filters+self.superblock4_filters
 
         self.num_classes=num_classes
-        self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(image_channels, self.index[0], filter_size=3, stride=1, padding=1, bias=False)
         self.bn1 = nn.BatchNorm2d(self.index[0])
         self.network=self._create_network(block)
         self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.maxpool=nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
+        self.maxpool=nn.MaxPool2d(filter_size=3, stride=2, padding=1)
         self.relu=nn.ReLU()
 
     def _create_network(self,block):
+
         layers=[]
         if block==BasicBlock:
-            layers.append(block(self.index[0],self.index[1],self.index[2],stride=1))
+            layers.append(block(self.index[0],self.index[1],self.index[2],filter_size_1=self.filter_sizes[0],filter_size_2=self.filter_sizes[1],stride=1))
             for i in range(2,len(self.index)-2,2):
                 if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
                     stride=2
                 else:
                     stride=1
-                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],stride=stride))
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],
+                                    filter_size_1=self.filter_sizes[i],filter_size_2=self.filter_sizes[2],stride=stride))
         elif block==Bottleneck:
-            layers.append(block(self.index[0],self.index[1],self.index[2],self.index[3],stride=1))
+            layers.append(block(self.index[0],self.index[1],self.index[2],self.index[3],filter_size_1=self.filter_sizes[0],filter_size_2=self.filter_sizes[1],filter_size_3=self.filter_sizes[2],stride=1))
             for i in range(3,len(self.index)-3,3):
                 if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
                     stride=2
                 else:
                     stride=1
-                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],self.index[i+3],stride=stride))
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],self.index[i+3],
+                                    filter_size_1=self.filter_sizes[i],filter_size_2=self.filter_sizes[i+1],filter_size_3=self.filter_sizes[i+2],stride=stride))
         #print(len(self.index),'len index')
         return nn.Sequential(*layers)
 

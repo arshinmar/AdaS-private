@@ -48,6 +48,9 @@ class LayerType(Enum):
 
 
 class IOMetrics(NamedTuple):
+    mode_12_channel_rank: List[float]
+    mode_12_channel_S: List[float]
+    mode_12_channel_condition: List[float]
     input_channel_rank: List[float]
     input_channel_S: List[float]
     input_channel_condition: List[float]
