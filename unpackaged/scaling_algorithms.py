@@ -49,7 +49,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
     in_conditions,out_conditions = get_info('condition',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     rank_averages_final=calculate_correct_output_sizes(input_ranks_final, output_ranks_final, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
     rank_averages_stable=calculate_correct_output_sizes(input_ranks_stable,output_ranks_stable, conv_size_list, shortcut_indexes, GLOBALS.CONFIG['delta_threshold'],final=False)[1]
-    #print(rank_averages_final,'~~~ RANK AVERAGES FINAL ~~~')
+
     mapping_conditions=convert_format(out_conditions,shortcut_indexes)
     mapping_conditions[0] = [out_conditions[0]]+mapping_conditions[0]
 
@@ -80,8 +80,15 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
             break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
             delta_percentage[superblock][layer] = slope(yaxis,break_point)
 
-            #delta_percentage[superblock][layer] = calculate_slopes(conv_size_list,shortcut_indexes,path=GLOBALS.EXCEL_PATH) [superblock][layer]
+            #CHANNEL SIZE MANIPULATION
             current_operation=EXPAND
+            if ((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
+                current_operation = SHRINK
+
+            #KERNEL SIZE MANIPULATION
+
+
+            '''
             if (delta_percentage[superblock][layer] >= delta_threshold):
                 current_operation = EXPAND
             elif (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
@@ -92,6 +99,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
 
             if (current_operation==None):
                 current_operation = EXPAND
+            '''
 
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
                 if (factor_scale[superblock][layer] < min_scale_limit):
@@ -106,7 +114,7 @@ def delta_scaling(conv_size_list,delta_threshold,mapping_threshold,min_scale_lim
     print(conv_size_list, 'OLD OUTPUT CONV SIZE LIST')
     print(new_channel_sizes,'NEW OUTPUT CONV SIZE LIST')
 
-    return last_operation,factor_scale,new_channel_sizes,delta_percentage, rank_averages_final, rank_averages_stable
+    return last_operation,factor_scale,new_channel_sizes,new_kernel_sizes,delta_percentage, rank_averages_final, rank_averages_stable
 
 def calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold):
     output_ranks_layer_1 = output_ranks[0]
