@@ -237,12 +237,16 @@ def new_output_sizes(current_conv_sizes,ranks,threshold):
     print(new_conv_sizes,'NEW CONV SIZES')
     return new_conv_sizes
 
-def update_network(output_sizes):
-    #new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+def nearest_upper_odd(list_squared_kernel_size):
+    for superblock in range(len(list_squared_kernel_size)):
+        list_squared_kernel_size[superblock] = np.ceil(np.sqrt(list_squared_kernel_size[superblock])) // 2 * 2 + 1
+    return list_squared_kernel_size.tolist()
+
+def update_network(new_channel_sizes,new_kernel_sizes):
     if GLOBALS.CONFIG['network']=='DASNet34':
-        new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+        new_network=DASNet34(num_classes=10,new_output_sizes=new_channel_sizes,new_kernel_sizes=nearest_upper_odd(new_kernel_sizes))
     elif GLOBALS.CONFIG['network']=='DASNet50':
-        new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
+        new_network=DASNet50(num_classes=10,new_output_sizes=new_channel_sizes,new_kernel_sizes=nearest_upper_odd(new_kernel_sizes))
     return new_network
 
 def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path_string_full_train):
@@ -269,12 +273,12 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
 
     return True
 
-def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,output_path_fulltrain):
+def run_fresh_full_train(train_loader,test_loader,device,output_sizes,kernel_sizes,epochs,output_path_fulltrain):
 
     if GLOBALS.CONFIG['network']=='DASNet34':
-        new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes)
+        new_network=DASNet34(num_classes=10,new_output_sizes=output_sizes,new_kernel_sizes=kernel_sizes)
     elif GLOBALS.CONFIG['network']=='DASNet50':
-        new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes)
+        new_network=DASNet50(num_classes=10,new_output_sizes=output_sizes,new_kernel_sizes=kernel_sizes)
 
     GLOBALS.FIRST_INIT = False
 
@@ -300,8 +304,9 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,epochs,out
     run_epochs(0, epochs, train_loader, test_loader, device, optimizer, scheduler, output_path_fulltrain)
     return True
 
-def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
+def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
     create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
+    kernel_path=out_folder+'\\'+'dynamic_kernel_Size_Plot.png'
     conv_path=out_folder+'\\'+'dynamic_layer_Size_Plot.png'
     rank_final_path=out_folder+'\\'+'dynamic_rank_final.png'
     rank_stable_path=out_folder+'\\'+'dynamic_rank_stable.png'
@@ -326,6 +331,8 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
     plt.clf()
     stacked_bar_plot(adapted_conv_file_name, network_visualize_path)
     plt.clf()
+    adapted_info_graph(adapted_kernel_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Kernel Size',last_epoch)
+    plt.clf()
     adapted_info_graph(adapted_conv_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Layer Size',last_epoch)
     plt.clf()
     trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
@@ -340,11 +347,15 @@ def create_graphs(trial_info_file_name,adapted_conv_file_name,rank_final_file_na
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train, new_threshold=None):
     conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+    kernel_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
     rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
     rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
 
     conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx]
+    kernel_size_list=[np.square(GLOBALS.super1_kernel_idx).tolist(),np.square(GLOBALS.super2_kernel_idx).tolist(),np.square(GLOBALS.super3_kernel_idx).tolist(),np.square(GLOBALS.super4_kernel_idx).tolist()]
+
     conv_data.loc[0] = conv_size_list
+    kernel_data.loc[0] = nearest_upper_odd(kernel_size_list)
     delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
 
 
@@ -353,6 +364,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
     print('~~~First run_epochs done.~~~')
     last_operation,factor_scale,delta_percentage=[],[],[]
+    last_operation_kernel,factor_scale_kernel,delta_percentage_kernel=[],[],[]
 
     for i in range(1,GLOBALS.CONFIG['adapt_trials']):
 
@@ -373,7 +385,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         '------------------------------------------------------------------------------------------------------------------------------------------------'
         #output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])[0]
         #output_sizes=calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])
-        last_operation, factor_scale, output_sizes, delta_percentage, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,GLOBALS.CONFIG['delta_threshold'],GLOBALS.CONFIG['mapping_condition_threshold'],GLOBALS.CONFIG['min_scale_limit'],GLOBALS.CONFIG['adapt_trials'],shortcut_indexes,last_operation, factor_scale, delta_percentage)
+        last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes, new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,kernel_size_list,GLOBALS.CONFIG['delta_threshold'],GLOBALS.CONFIG['delta_threshold_kernel'],GLOBALS.CONFIG['mapping_condition_threshold'],GLOBALS.CONFIG['min_scale_limit'],GLOBALS.CONFIG['adapt_trials'],shortcut_indexes,last_operation, factor_scale, delta_percentage, last_operation_kernel, factor_scale_kernel, delta_percentage_kernel)
         zero_value=True
         for blah in last_operation:
             for inner in blah:
@@ -383,13 +395,18 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         end=time.time()
         print((end-start),'Time ELAPSED FOR SCALING in TRIAL '+str(i))
         last_operation_copy, factor_scale_copy, delta_percentage_copy, rank_averages_final_copy, rank_averages_stable_copy = copy.deepcopy(last_operation),copy.deepcopy(factor_scale),copy.deepcopy(delta_percentage),copy.deepcopy(rank_averages_final),copy.deepcopy(rank_averages_stable)
-        conv_size_list=copy.deepcopy(output_sizes)
-        conv_data.loc[i] = output_sizes
+
+        conv_size_list=copy.deepcopy(new_channel_sizes)
+        kernel_size_list=copy.deepcopy(new_kernel_sizes)
+
+        conv_data.loc[i] = new_channel_sizes
+        kernel_data.loc[i] = nearest_upper_odd(new_kernel_sizes)
+
         rank_final_data.loc[i] = rank_averages_final_copy
         rank_stable_data.loc[i] = rank_averages_stable_copy
         delta_info.loc[i] = [delta_percentage_copy,factor_scale_copy,last_operation_copy]
         print('~~~Starting Conv Adjustments~~~')
-        new_network=update_network(output_sizes)
+        new_network=update_network(new_channel_sizes,new_kernel_sizes)
 
         if zero_value==True:
             GLOBALS.CONFIG['adapt_trials']=i
@@ -407,16 +424,17 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         run_epochs(i, epochs, train_loader, test_loader,
                                device, optimizer, scheduler, output_path_train)
 
-    return conv_data,rank_final_data,rank_stable_data,output_sizes,delta_info
+    return kernel_data,conv_data,rank_final_data,rank_stable_data,new_channel_sizes,nearest_upper_odd(new_kernel_sizes),delta_info
 
-def create_trial_data_file(conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights):
+def create_trial_data_file(kernel_data,conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights):
     #parameter_data.to_excel(output_path_string_trials+'\\'+'adapted_parameters.xlsx')
     delta_info.to_excel(output_path_string_trials+'\\'+'adapted_delta_info.xlsx')
+    kernel_data.to_excel(output_path_string_trials+'\\'+'adapted_kernels.xlsx')
     conv_data.to_excel(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
     rank_final_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_final.xlsx')
     rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
-    torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
+    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_kernels.xlsx',output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
     outputs=pd.read_excel(file_name)

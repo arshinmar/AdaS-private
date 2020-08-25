@@ -354,6 +354,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     plt.xticks(x_values, names, fontweight='bold')
     plt.xlabel('Trial Number')
     plt.ylabel('Cumulative Channel Size')
+
     plt.title('ResNet-like Architecture w/Channel Size ='+GLOBALS.CONFIG['init_conv_setting'][:2]+', Threshold='+str(GLOBALS.CONFIG['delta_threshold'])+', MC Threshold='+str(GLOBALS.CONFIG['mapping_condition_threshold']))
     #plt.title('ResNet-like Architecture w/Channel Size =443, Threshold=, MC Threshold=')
     figure=plt.gcf()
@@ -363,7 +364,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
 def create_rank_graph(file_name,shortcut_indexes):
     #superblock=4
     layer=15
-    num_epochs=20
+    num_epochs=15
     epoch_num=[i for i in range(num_epochs)]
     yaxis=[]
     for k in range(num_epochs):
@@ -384,6 +385,7 @@ def create_rank_graph(file_name,shortcut_indexes):
     fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
     fig=plt.axvline(x=break_point)
 
+    plt.ylim([0,0.35])
     #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
