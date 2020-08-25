@@ -146,8 +146,10 @@ class Bottleneck(nn.Module):
         return out
 
 class Network(nn.Module):
+
     def __init__(self, block, image_channels=3,new_output_sizes=None,new_kernel_sizes=None,num_classes=10):
         super(Network, self).__init__()
+
         self.superblock1_indexes=GLOBALS.super1_idx
         self.superblock2_indexes=GLOBALS.super2_idx
         self.superblock3_indexes=GLOBALS.super3_idx
@@ -168,6 +170,7 @@ class Network(nn.Module):
             self.superblock2_kernels=new_kernel_sizes[1]
             self.superblock3_kernels=new_kernel_sizes[2]
             self.superblock4_kernels=new_kernel_sizes[3]
+            print(new_kernel_sizes, 'VALUES PROVIDED FOR KERNEL SIZES')
 
         shortcut_indexes=[]
         counter=-1
@@ -185,9 +188,12 @@ class Network(nn.Module):
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
         self.kernel_sizes=self.superblock1_kernels+self.superblock2_kernels+self.superblock3_kernels+self.superblock4_kernels
+        print(self.kernel_sizes,'KERNEL SIZES')
+        print(len(self.index),'INDEX LENGTH')
+        print(len(self.kernel_sizes),'KERNEL LENGTH')
 
         self.num_classes=num_classes
-        self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=3, stride=1, padding=1, bias=False)
+        self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=self.kernel_sizes[0], stride=1, padding=int((self.kernel_sizes[0]-1)/2), bias=False)
         self.bn1 = nn.BatchNorm2d(self.index[0])
         self.network=self._create_network(block)
         self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
@@ -199,23 +205,21 @@ class Network(nn.Module):
 
         layers=[]
         if block==BasicBlock:
-            layers.append(block(self.index[0],self.index[1],self.index[2],kernel_size_1=self.kernel_sizes[0],kernel_size_2=self.kernel_sizes[1],stride=1))
+            layers.append(block(self.index[0],self.index[1],self.index[2],kernel_size_1=self.kernel_sizes[1],kernel_size_2=self.kernel_sizes[2],stride=1))
             for i in range(2,len(self.index)-2,2):
                 if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
                     stride=2
                 else:
                     stride=1
-                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],
-                                    kernel_size_1=self.kernel_sizes[i],kernel_size_2=self.kernel_sizes[i+1],stride=stride))
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],kernel_size_1=self.kernel_sizes[i+1],kernel_size_2=self.kernel_sizes[i+2],stride=stride))
         elif block==Bottleneck:
-            layers.append(block(self.index[0],self.index[1],self.index[2],self.index[3],kernel_size_1=self.kernel_sizes[0],kernel_size_2=self.kernel_sizes[1],kernel_size_3=self.kernel_sizes[2],stride=1))
+            layers.append(block(self.index[0],self.index[1],self.index[2],self.index[3],kernel_size_1=self.kernel_sizes[1],kernel_size_2=self.kernel_sizes[2],kernel_size_3=self.kernel_sizes[3],stride=1))
             for i in range(3,len(self.index)-3,3):
                 if (i+1==self.shortcut_1_index or i+2==self.shortcut_2_index or i+3==self.shortcut_3_index):
                     stride=2
                 else:
                     stride=1
-                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],self.index[i+3],
-                                    kernel_size_1=self.kernel_sizes[i],kernel_size_2=self.kernel_sizes[i+1],kernel_size_3=self.kernel_sizes[i+2],stride=stride))
+                layers.append(block(self.index[i],self.index[i+1],self.index[i+2],self.index[i+3],kernel_size_1=self.kernel_sizes[i+1],kernel_size_2=self.kernel_sizes[i+2],kernel_size_3=self.kernel_sizes[i+3],stride=stride))
         #print(len(self.index),'len index')
         return nn.Sequential(*layers)
 
@@ -270,4 +274,4 @@ def test():
     torch.onnx.export(net, dummy_input, "model.onnx")
     '''
 
-#test()
+test()

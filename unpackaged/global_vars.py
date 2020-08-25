@@ -35,7 +35,7 @@ super2_idx = [96,96,96,96,96,96,96,96]
 super3_idx = [96,96,96,96,96,96,96,96,96,96,96,96]
 super4_idx = [96,96,96,96,96,96]
 
-super1_kernel_idx=[9,9,9,9,9,9]
+super1_kernel_idx=[9,9,9,9,9,9,9]
 super2_kernel_idx=[9,9,9,9,9,9,9,9]
 super3_kernel_idx=[9,9,9,9,9,9,9,9,9,9,9,9]
 super4_kernel_idx=[9,9,9,9,9,9]

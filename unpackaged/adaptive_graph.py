@@ -363,7 +363,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
 def create_rank_graph(file_name,shortcut_indexes):
     #superblock=4
     layer=15
-    num_epochs=20
+    num_epochs=15
     epoch_num=[i for i in range(num_epochs)]
     yaxis=[]
     for k in range(num_epochs):
@@ -390,7 +390,7 @@ def create_rank_graph(file_name,shortcut_indexes):
     plt.show()
     return True
 
-#create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
 
 '''
 shortcut_indexes=[7,16,29]
