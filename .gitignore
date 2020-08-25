@@ -24,3 +24,7 @@ unpackaged/.DS_Store
 unpackaged/models/.DS_Store
 .DS_Store
 .DS_Store
+unpackaged/models/Digraph.gv
+unpackaged/models/Digraph.gv.pdf
+unpackaged/models/model.onnx
+unpackaged/models/temp_resnet.onnx
