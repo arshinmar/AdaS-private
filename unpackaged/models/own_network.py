@@ -244,15 +244,15 @@ class Network(nn.Module):
         return x
 
 
-def DASNet34(num_classes = 10,new_output_sizes=None):
+def DASNet34(num_classes = 10,new_output_sizes=None,new_kernel_sizes=None):
     GLOBALS.BLOCK_TYPE='BasicBlock'
     print('SETTING BLOCK_TYPE TO BasicBlock')
-    return Network(BasicBlock, 3, num_classes=10, new_output_sizes=new_output_sizes)
+    return Network(BasicBlock, 3, num_classes=10, new_output_sizes=new_output_sizes,new_kernel_sizes=new_kernel_sizes)
 
-def DASNet50(num_classes = 10,new_output_sizes=None):
+def DASNet50(num_classes = 10,new_output_sizes=None,new_kernel_sizes=None):
     GLOBALS.BLOCK_TYPE='Bottleneck'
     print('SETTING BLOCK_TYPE TO Bottleneck')
-    return Network(Bottleneck, 3, num_classes=10, new_output_sizes=new_output_sizes)
+    return Network(Bottleneck, 3, num_classes=10, new_output_sizes=new_output_sizes,new_kernel_sizes=new_kernel_sizes)
 
 def test():
     #writer = SummaryWriter('runs/resnet34_1')
