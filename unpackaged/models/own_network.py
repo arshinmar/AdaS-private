@@ -146,8 +146,10 @@ class Bottleneck(nn.Module):
         return out
 
 class Network(nn.Module):
+
     def __init__(self, block, image_channels=3,new_output_sizes=None,new_kernel_sizes=None,num_classes=10):
         super(Network, self).__init__()
+
         self.superblock1_indexes=GLOBALS.super1_idx
         self.superblock2_indexes=GLOBALS.super2_idx
         self.superblock3_indexes=GLOBALS.super3_idx
@@ -168,6 +170,7 @@ class Network(nn.Module):
             self.superblock2_kernels=new_kernel_sizes[1]
             self.superblock3_kernels=new_kernel_sizes[2]
             self.superblock4_kernels=new_kernel_sizes[3]
+            print(new_kernel_sizes, 'VALUES PROVIDED FOR KERNEL SIZES')
 
         shortcut_indexes=[]
         counter=-1
@@ -184,14 +187,7 @@ class Network(nn.Module):
         self.shortcut_3_index = shortcut_indexes[2]
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
-        try:
-            self.kernel_sizes=self.superblock1_kernels+self.superblock2_kernels+self.superblock3_kernels+self.superblock4_kernels
-        except:
-            print(self.superblock1_kernels)
-            print(self.superblock2_kernels)
-            print(self.superblock3_kernels)
-            print(self.superblock4_kernels)
-            print(type(self.superblock1_kernels))
+        self.kernel_sizes=self.superblock1_kernels+self.superblock2_kernels+self.superblock3_kernels+self.superblock4_kernels
         print(self.kernel_sizes,'KERNEL SIZES')
         print(len(self.index),'INDEX LENGTH')
         print(len(self.kernel_sizes),'KERNEL LENGTH')
@@ -278,4 +274,4 @@ def test():
     torch.onnx.export(net, dummy_input, "model.onnx")
     '''
 
-#test()
+test()
