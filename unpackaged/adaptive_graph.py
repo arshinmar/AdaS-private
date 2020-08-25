@@ -278,10 +278,10 @@ def adaptive_stop(x_data,y_data,threshold_min,epoch_wait):
 
 
 def slope(y_data,breakpoint):
-    return (y_data[int(breakpoint)]-y_data[GLOBALS.CONFIG['stable_epoch']])/(breakpoint-GLOBALS.CONFIG['stable_epoch'])
+    return (y_data[int(breakpoint)]-y_data[GLOBALS.CONFIG['stable_epoch']])/(breakpoint-GLOBALS.CONFIG['stable_epoch']+0.0001)
 
 def slope_clone(y_data,breakpoint):
-    return (y_data[int(breakpoint)]-y_data[0])/(breakpoint)
+    return (y_data[int(breakpoint)]-y_data[0])/(breakpoint+0.0001)
 
 
 
