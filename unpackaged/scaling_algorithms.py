@@ -69,8 +69,10 @@ def convert_format(full_list, temp_shortcut_indexes):
 def nearest_upper_odd(squared_kernel_size):
     return np.ceil(math.sqrt(squared_kernel_size)) // 2 * 2 + 1
 
-def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshold_kernel,mapping_threshold,min_scale_limit,num_trials,shortcut_indexes,last_operation,factor_scale,delta_percentage,last_operation_kernel,factor_scale_kernel,delta_percentage_kernel):
+def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operation,factor_scale,delta_percentage,last_operation_kernel,factor_scale_kernel,delta_percentage_kernel):
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
+    print('*****MIN KERNEL SIZE USED IN DELTA SCALING: {}'.format(GLOBALS.CONFIG['min_kernel_size']))
+
     input_ranks_final,output_ranks_final = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
     input_ranks_stable,output_ranks_stable = get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=GLOBALS.CONFIG['stable_epoch'])
     in_conditions,out_conditions = get_info('condition',path=GLOBALS.EXCEL_PATH,epoch_number=-1)
@@ -83,6 +85,11 @@ def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshol
     mapping_conditions=convert_format(out_conditions,shortcut_indexes)
     mapping_conditions[0] = [out_conditions[0]]+mapping_conditions[0]
     '---------------------------------------------------------------------------------------------------------------------------'
+
+    delta_threshold = GLOBALS.CONFIG['delta_threshold']
+    delta_threshold_kernel = GLOBALS.CONFIG['delta_threshold_kernel']
+    mapping_threshold = GLOBALS.CONFIG['mapping_condition_threshold']
+    min_scale_limit = GLOBALS.CONFIG['min_scale_limit']
 
     EXPAND,SHRINK,STOP = 1,-1,0
     new_channel_sizes=copy.deepcopy(conv_size_list)
@@ -98,7 +105,7 @@ def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshol
             last_operation.append([1]*len(i))
             delta_percentage.append([0]*len(i))
 
-            factor_scale_kernel.append([GLOBALS.CONFIG['factor_scale']]*len(i))
+            factor_scale_kernel.append([GLOBALS.CONFIG['factor_scale_kernel']]*len(i))
             last_operation_kernel.append([-1]*len(i))
             delta_percentage_kernel.append([0]*len(i))
 
@@ -107,6 +114,11 @@ def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshol
         for layer in range(0,len(new_channel_sizes[superblock])):
             channel_stop = False
             kernel_stop = False
+
+            if (GLOBALS.CONFIG['min_kernel_size']==GLOBALS.CONFIG['min_kernel_size_2'] and kernel_size_list[superblock][layer]==GLOBALS.min_kernel_size_1):
+                last_operation_kernel[superblock][layer]=-2
+
+            #DO NOT GIVE IT THE OPTION TO EXPAND/SHRINK WHEN THE LAST OPERATION WAS SET TO STOP
             if (last_operation[superblock][layer] == STOP):
                 channel_stop = True
                 current_operation=STOP
@@ -114,7 +126,7 @@ def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshol
                 kernel_stop = True
                 current_operation_kernel=STOP
 
-            #delta_percentage[superblock][layer] = round((rank_averages_final[superblock][layer]-rank_averages_stable[superblock][layer])/rank_averages_final[superblock][layer],5)
+            #CODE FOR CALCULATING THE RANK AVERAGE SLOPES
             epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
             yaxis=[]
             yaxis_kernel=[]
@@ -140,34 +152,49 @@ def delta_scaling(conv_size_list,kernel_size_list,delta_threshold,delta_threshol
                 current_operation=EXPAND
                 if ((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
                     current_operation = SHRINK
+                if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
+                    current_operation = STOP
 
             #KERNEL SIZE OPERATION
             if (kernel_stop==False):
                 current_operation_kernel=EXPAND
                 if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])):
                     current_operation_kernel = SHRINK
+                if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
+                    current_operation_kernel = STOP
             '-----------------------------------------------ADJUST FACTOR SCALE-------------------------------------------------------------------------------'
             #CHANNEL SIZE FACTOR
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
-                if (factor_scale[superblock][layer] < min_scale_limit):
-                    current_operation = STOP
                 factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
 
             #KERNEL SIZE FACTOR
             if (last_operation_kernel[superblock][layer] != current_operation_kernel and FIRST_TIME==False):
-                if (factor_scale_kernel[superblock][layer] < min_scale_limit):
-                    current_operation = STOP
                 factor_scale_kernel[superblock][layer] = factor_scale_kernel[superblock][layer]/2
-            '-------------------------------------------------------------------------------------------------------------------------------------------------'
+            '--------------------------------------------------CHECK FOR STOP -------------------------------------------------------------------------'
+            #CHANNEL SIZE STOP
+            if (factor_scale[superblock][layer] < min_scale_limit):
+                current_operation = STOP
+
+            #KERNEL SIZE STOP
+            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
+                current_operation_kernel = STOP
+            '----------------------------------------------------------------------------------------------------------------------------------------'
             last_operation[superblock][layer] = current_operation
             last_operation_kernel[superblock][layer] = current_operation_kernel
 
             new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
-            new_kernel_sizes[superblock][layer] = kernel_size_list[superblock][layer] * (1 + factor_scale_kernel[superblock][layer]*last_operation_kernel[superblock][layer])
+            new_kernel_sizes[superblock][layer] = int(kernel_size_list[superblock][layer] + (last_operation_kernel[superblock][layer]*2))
 
+    print('------------------------------------------------------------------------------------------------')
     print(factor_scale,'FACTOR SCALE')
-    print(conv_size_list, 'OLD OUTPUT CONV SIZE LIST')
-    print(new_channel_sizes,'NEW OUTPUT CONV SIZE LIST')
+    print(conv_size_list, 'OLD CONV SIZE LIST')
+    print(new_channel_sizes,'NEW CONV SIZE LIST')
+    print('------------------------------------------------------------------------------------------------')
+    print(factor_scale_kernel,'FACTOR SCALE KERNEL')
+    print(kernel_size_list, 'OLD KERNEL SIZE LIST')
+    print(new_kernel_sizes,'NEW KERNEL SIZE LIST')
+    print('------------------------------------------------------------------------------------------------')
+
 
     return last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes,new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable
 

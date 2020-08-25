@@ -87,7 +87,7 @@ class BasicBlock(nn.Module):
                 nn.Conv2d(
                         in_planes,
                         out_planes,
-                        filter_size=1,
+                        kernel_size=1,
                         stride=stride,
                         bias=False
                 ),
@@ -133,7 +133,7 @@ class Bottleneck(nn.Module):
         if stride != 1 or in_planes != out_planes:
             self.shortcut = nn.Sequential(
                 nn.Conv2d(in_planes, out_planes,
-                          filter_size=1, stride=stride, bias=False),
+                          kernel_size=1, stride=stride, bias=False),
                 nn.BatchNorm2d(out_planes)
             )
 
@@ -202,7 +202,7 @@ class Network(nn.Module):
         self.network=self._create_network(block)
         self.linear=nn.Linear(self.index[len(self.index)-1],num_classes)
         self.avgpool = nn.AdaptiveAvgPool2d(1)
-        self.maxpool=nn.MaxPool2d(filter_size=3, stride=2, padding=1)
+        self.maxpool=nn.MaxPool2d(kernel_size=3, stride=2, padding=1)
         self.relu=nn.ReLU()
 
     def _create_network(self,block):

@@ -55,8 +55,8 @@ if __name__ == '__main__':
 
         if GLOBALS.CONFIG['full_train_only']==False:
             print('Starting Trials')
-            kernel_data,conv_data,rank_final_data,rank_stable_data,output_sizes,kernel_sizes,delta_info=run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train,new_threshold=i)
-            create_trial_data_file(kernel_data,conv_data,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights)
+            kernel_data,conv_data,rank_final_data,rank_stable_data,output_sizes,kernel_sizes,delta_info,delta_info_kernel=run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train,new_threshold=i)
+            create_trial_data_file(kernel_data,conv_data,delta_info_kernel,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights)
             print('Done Trials.')
         else:
             try:
