@@ -16,9 +16,9 @@ EXCEL_PATH = 'path'
 THRESHOLD = 0
 FULL_TRAIN = False
 FULL_TRAIN_MODE = ''
-BLOCK_TYPE = ''
+BLOCK_TYPE = 'BasicBlock'
 '''
-# For DASNet90
+# For DASNet30
 super1_idx = [32,32,32,32,32,32,32,32,32,32]
 super2_idx = [32,32,32,32,32,32,32,32,32,32,32,32]
 super3_idx = [32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32,32]
@@ -35,10 +35,10 @@ super2_idx = [32,32,32,32,32,32,32,32]
 super3_idx = [32,32,32,32,32,32,32,32,32,32,32,32]
 super4_idx = [32,32,32,32,32,32]
 
-super1_kernel_idx=[9,9,9,9,9,9,9]
-super2_kernel_idx=[9,9,9,9,9,9,9,9]
-super3_kernel_idx=[9,9,9,9,9,9,9,9,9,9,9,9]
-super4_kernel_idx=[9,9,9,9,9,9]
+super1_kernel_idx=[3,3,3,3,3,3,3]
+super2_kernel_idx=[3,3,3,3,3,3,3,3]
+super3_kernel_idx=[3,3,3,3,3,3,3,3,3,3,3,3]
+super4_kernel_idx=[3,3,3,3,3,3]
 
 min_kernel_size_1 = None
 

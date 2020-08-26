@@ -185,7 +185,7 @@ def get_trial_info(file_name,num_trials,num_layers,specified_epoch, skip_connect
             final_output[i].append(dfs[info+str(specified_epoch)][j])
     return final_output
 
-def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
+'''def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch,trial_increment=1):
     layers_list=[[]]
     if num_trials<=10:
         mult_val,temp_val=6,5
@@ -200,7 +200,7 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
 
     true_temp=[]
     for i in range(0,len(layers_size_list),1):
-        if i%2==0:
+        if i%trial_increment==0:
             true_temp+=[layers_size_list[i]]
     layers_size_list=true_temp
 
@@ -214,7 +214,70 @@ def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch):
     colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
     plt.figure()
     for i in range(0,len(layers_size_list),1):
-        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(2*i+1)))
+        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(trial_increment*i+1)))
+
+    plt.xlabel('SuperBlock',fontweight='bold')
+    plt.ylabel('Layer Size',fontweight='bold')
+    #plt.title('DASNet:' + evo_type + ' Evolution w.r.t. Trial (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
+    if num_trials<=20:
+        plt.xticks([mult_val*r + temp_val*barWidth + 3 + num_trials*0.3 for r in range(len(temp))], [str(i) for i in range(len(temp))])
+    else:
+        plt.xticks([mult_val*r + num_trials*0.3 + 3*num_trials for r in range(len(temp))], [str(i) for i in range(len(temp))])
+
+    plt.legend(loc='upper right')
+    figure=plt.gcf()
+    if num_trials<=20:
+        figure.set_size_inches(15.4, 5.34)
+    else:
+        figure.set_size_inches(45.4, 5.34)
+    #addition=str(GLOBALS.CONFIG['adapt_rank_threshold'])+'_conv_size='+GLOBALS.CONFIG['init_conv_setting']+'_epochpertrial='+str(GLOBALS.CONFIG['epochs_per_trial'])+'_beta='+str(GLOBALS.CONFIG['beta'])
+    plt.savefig(path,bbox_inches='tight')
+    return True
+
+def adapted_info_graph(adapted_file_name,num_trials,path,evo_type,specified_epoch):
+    layers_info=pd.read_excel(adapted_file_name) #This file_name is an adapted_blah file_name
+    layers_size_list=[]
+
+    for i in range(len(layers_info.iloc[:,0].to_numpy())):
+        temp=''
+        main=layers_info.iloc[i,1:].to_numpy()
+        for j in main:
+            temp+=j[:]
+        temp=ast.literal_eval(remove_brackets(temp))
+        layers_size_list+=[temp]
+
+    create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch)'''
+
+def create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch,trial_increment=1):
+    layers_list=[[]]
+    if num_trials<=10:
+        mult_val,temp_val=6,5
+    else:
+        mult_val,temp_val=(45/22)*num_trials,10
+
+    barWidth=(0.5/6)*mult_val
+    if num_trials<=10:
+        trueWidth=barWidth
+    else:
+        trueWidth=(1.2/15)*num_trials
+
+    true_temp=[]
+    for i in range(0,len(layers_size_list),1):
+        if i%trial_increment==0:
+            true_temp+=[layers_size_list[i]]
+    layers_size_list=true_temp
+
+    for i in range(1,len(layers_size_list[0])+1,1):
+        layers_list[0]+=[mult_val*i]
+
+    for i in range(1,len(layers_size_list),1):
+        temp=[x + trueWidth for x in layers_list[i-1]]
+        layers_list+=[temp]
+
+    colors=['#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045','#4d4d4e','#b51b1b','#1f639b','#1bb5b5','#fcb045']
+    plt.figure()
+    for i in range(0,len(layers_size_list),1):
+        plt.bar(layers_list[i],layers_size_list[i],color=colors[i],width=trueWidth, edgecolor='white',label=str('Trial '+str(trial_increment*i+1)))
 
     plt.xlabel('SuperBlock',fontweight='bold')
     plt.ylabel('Layer Size',fontweight='bold')
@@ -247,7 +310,6 @@ def adapted_info_graph(adapted_file_name,num_trials,path,evo_type,specified_epoc
         layers_size_list+=[temp]
 
     create_plot(layers_size_list,num_trials,path,evo_type,specified_epoch)
-
 
 def trial_info_graph(trial_file_name,num_trials,num_layers, path,evo_type,info,shortcut_indexes,specified_epoch):
     layers_size_list=get_trial_info(trial_file_name, num_trials, num_layers, specified_epoch,shortcut_indexes,info)
@@ -356,7 +418,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     plt.ylabel('Cumulative Channel Size')
 
     plt.title('ResNet-like Architecture w/Channel Size ='+GLOBALS.CONFIG['init_conv_setting'][:2]+', Threshold='+str(GLOBALS.CONFIG['delta_threshold'])+', MC Threshold='+str(GLOBALS.CONFIG['mapping_condition_threshold']))
-    #plt.title('ResNet-like Architecture w/Channel Size =443, Threshold=, MC Threshold=')
+    plt.title('ResNet-like Architecture w/Channel Size =443, Threshold=, MC Threshold=')
     figure=plt.gcf()
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
@@ -392,7 +454,8 @@ def create_rank_graph(file_name,shortcut_indexes):
     plt.show()
     return True
 
-create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+#create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+#adapted_info_graph('adapted_architectures.xlsx',35,'temp.png','Layer Size',-1)
 
 '''
 shortcut_indexes=[7,16,29]
