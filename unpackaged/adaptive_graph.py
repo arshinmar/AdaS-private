@@ -401,7 +401,7 @@ def create_rank_graph(file_name,shortcut_indexes, trial):
     plt.show()
     return plt
 
-#create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output3/Trials\AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '128')
+create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output3/Trials\AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '16')
 
 '''
 shortcut_indexes=[7,16,29]
