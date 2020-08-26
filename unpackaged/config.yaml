@@ -12,7 +12,7 @@ beta: 0.7
 beta_full: 0.95
 full_train_only: False
 init_lr: 0.1
-init_conv_setting: '128,128,128,9'
+init_conv_setting: '16,16,16,9'
 
 adapt_trials: 2
 epochs_per_trial: 20
