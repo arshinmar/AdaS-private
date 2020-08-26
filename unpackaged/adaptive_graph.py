@@ -361,7 +361,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
 
-def create_rank_graph(file_name,shortcut_indexes, trial):
+def create_rank_graph(file_name,shortcut_indexes, conv):
     #superblock=4
     layer=15
     num_epochs=15
@@ -382,7 +382,7 @@ def create_rank_graph(file_name,shortcut_indexes, trial):
     #print(yaxis,'YAXIS VALUES')
     break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
 
-    fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
+    fig=plt.plot(epoch_num,yaxis, marker='o', color='r', label='_nolegend_')
     fig=plt.axvline(x=break_point)
 
     plt.ylim([0,0.35])
@@ -395,13 +395,15 @@ def create_rank_graph(file_name,shortcut_indexes, trial):
     m = round((y2 - y1)/(x2 - x1), 3)
     x_val = [x1, x2]
     y_val = [y1, y2]
-    plt.plot(x_val, y_val, label='{}'.format(m))
+    plt.plot(x_val, y_val, label='Slope {}'.format(m), color='g')
     plt.legend()
-    plt.title('tial {}'.format(trial))
+    plt.title('Convolutional Size: {}x{}'.format(conv, conv))
+    plt.xlabel('Epoch')
+    plt.ylabel('Rank')
     plt.show()
     return plt
 
-create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output3/Trials\AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '16')
+# create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output1/conv_32,32,32,9_deltaThresh=0.02_minScaleLimit=0.01_beta=0.7_epochpert=20_adaptnum=35/Trials\AdaS_adapt_trial=1_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '128')
 
 '''
 shortcut_indexes=[7,16,29]
