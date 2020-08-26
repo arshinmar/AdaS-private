@@ -392,7 +392,7 @@ def create_rank_graph(file_name,shortcut_indexes):
     plt.show()
     return True
 
-create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+# create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
 
 '''
 shortcut_indexes=[7,16,29]
