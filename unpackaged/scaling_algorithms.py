@@ -150,18 +150,18 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
             #CHANNEL SIZE OPERATION
             if (channel_stop==False):
                 current_operation=EXPAND
-                if ((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
+                if (((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size'])) or (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
                     current_operation = SHRINK
-                if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
-                    current_operation = STOP
+                #if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
+                #    current_operation = STOP
 
             #KERNEL SIZE OPERATION
             if (kernel_stop==False):
                 current_operation_kernel=EXPAND
-                if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])):
+                if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])) or (kernel_size_list[superblock][layer]>=GLOBALS.CONFIG['max_kernel_size']):
                     current_operation_kernel = SHRINK
-                if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
-                    current_operation_kernel = STOP
+                #if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
+                #    current_operation_kernel = STOP
             '-----------------------------------------------ADJUST FACTOR SCALE-------------------------------------------------------------------------------'
             #CHANNEL SIZE FACTOR
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
@@ -176,7 +176,8 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
                 current_operation = STOP
 
             #KERNEL SIZE STOP
-            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
+            #if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
+            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/8): #If the operation has alternated 3 times
                 current_operation_kernel = STOP
             '----------------------------------------------------------------------------------------------------------------------------------------'
             last_operation[superblock][layer] = current_operation
