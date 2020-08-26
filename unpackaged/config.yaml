@@ -12,15 +12,15 @@ beta: 0.7
 beta_full: 0.95
 full_train_only: False
 init_lr: 0.1
-init_conv_setting: '64,64,64'
+init_conv_setting: ' 1,2,3,9'
 
 adapt_trials: 2
 epochs_per_trial: 20
 mapping_condition_threshold: 10
 delta_threshold_kernel: 0.03
-delta_threshold: 0.02
+delta_threshold: 0.01
 delta_threshold_values:
-  - 0.02
+  - 0.01
 kernel_adapt: 0 #0 for NO kernel adaptations, 1 for kernel adaptions
 
 min_scale_limit: 0.01
