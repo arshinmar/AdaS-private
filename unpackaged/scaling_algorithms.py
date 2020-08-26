@@ -177,7 +177,7 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
 
             #KERNEL SIZE STOP
             #if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
-            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/8): #If the operation has alternated 3 times
+            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/32): #If the operation has alternated 3 times
                 current_operation_kernel = STOP
             '----------------------------------------------------------------------------------------------------------------------------------------'
             last_operation[superblock][layer] = current_operation
