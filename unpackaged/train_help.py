@@ -185,6 +185,7 @@ def initialize(args: APNamespace, new_network, beta=None, new_threshold=None, sc
 
     if beta != None:
         GLOBALS.CONFIG['beta']=beta
+
     if new_threshold != None:
         GLOBALS.CONFIG['delta_threshold']=new_threshold
 

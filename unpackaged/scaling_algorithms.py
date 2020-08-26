@@ -95,6 +95,16 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
     new_channel_sizes=copy.deepcopy(conv_size_list)
     new_kernel_sizes=copy.deepcopy(kernel_size_list)
 
+    if GLOBALS.BLOCK_TYPE=='BasicBlock':
+        increment=2
+    elif GLOBALS.BLOCK_TYPE=='Bottleneck':
+        increment=3
+
+    gray_values=[]
+    gray_averages=[]
+    for i in conv_size_list:
+        gray_values+=[[]]
+
     FIRST_TIME=False
 
     slope_averages=[]
@@ -150,18 +160,18 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
             #CHANNEL SIZE OPERATION
             if (channel_stop==False):
                 current_operation=EXPAND
-                if ((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size']):
+                if (((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size'])) or (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
                     current_operation = SHRINK
-                if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
-                    current_operation = STOP
+                #if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
+                #    current_operation = STOP
 
             #KERNEL SIZE OPERATION
             if (kernel_stop==False):
                 current_operation_kernel=EXPAND
-                if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])):
+                if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])) or (kernel_size_list[superblock][layer]>=GLOBALS.CONFIG['max_kernel_size']):
                     current_operation_kernel = SHRINK
-                if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
-                    current_operation_kernel = STOP
+                #if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
+                #    current_operation_kernel = STOP
             '-----------------------------------------------ADJUST FACTOR SCALE-------------------------------------------------------------------------------'
             #CHANNEL SIZE FACTOR
             if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
@@ -176,25 +186,51 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
                 current_operation = STOP
 
             #KERNEL SIZE STOP
-            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
+            #if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
+            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/32): #If the operation has alternated 3 times
                 current_operation_kernel = STOP
             '----------------------------------------------------------------------------------------------------------------------------------------'
             last_operation[superblock][layer] = current_operation
             last_operation_kernel[superblock][layer] = current_operation_kernel
 
             new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
-            new_kernel_sizes[superblock][layer] = int(kernel_size_list[superblock][layer] + (last_operation_kernel[superblock][layer]*2))
 
+            if GLOBALS.CONFIG['kernel_adapt']==1:
+                new_kernel_sizes[superblock][layer] = int(kernel_size_list[superblock][layer] + (last_operation_kernel[superblock][layer]*2))
+            else:
+                new_kernel_sizes[superblock][layer] = kernel_size_list[superblock][layer]
+
+            if (superblock==0):
+                if layer%increment==0:
+                    gray_values[superblock]+=[new_channel_sizes[superblock][layer]]
+            else:
+                if (layer-1)%increment==0:
+                    gray_values[superblock]+=[new_channel_sizes[superblock][layer]]
+
+    for superblock in range(len(gray_values)):
+        gray_averages+=[even_round(np.average(gray_values[superblock]))]
+        
+    for superblock in range(len(new_channel_sizes)):
+        if superblock==0:
+            starter=0
+        else:
+            starter=1
+        for layer in range(starter,len(new_channel_sizes[superblock]),increment):
+            new_channel_sizes[superblock][layer]=gray_averages[superblock]
+
+    print('------------------------------------------------------------------------------------------------')
+    print(gray_values, 'GRAY VALUES')
+    print(gray_averages, 'GRAY AVERAGES')
     print('------------------------------------------------------------------------------------------------')
     print(factor_scale,'FACTOR SCALE')
     print(conv_size_list, 'OLD CONV SIZE LIST')
     print(new_channel_sizes,'NEW CONV SIZE LIST')
     print('------------------------------------------------------------------------------------------------')
-    print(factor_scale_kernel,'FACTOR SCALE KERNEL')
-    print(kernel_size_list, 'OLD KERNEL SIZE LIST')
-    print(new_kernel_sizes,'NEW KERNEL SIZE LIST')
-    print('------------------------------------------------------------------------------------------------')
-
+    if GLOBALS.CONFIG['kernel_adapt']==1:
+        print(factor_scale_kernel,'FACTOR SCALE KERNEL')
+        print(kernel_size_list, 'OLD KERNEL SIZE LIST')
+        print(new_kernel_sizes,'NEW KERNEL SIZE LIST')
+        print('------------------------------------------------------------------------------------------------')
 
     return last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes,new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable
 
@@ -254,7 +290,7 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
         increment=2
     elif GLOBALS.BLOCK_TYPE=='Bottleneck':
         increment=3
-
+    #print(increment, 'INCREMENT IN calculate_correct_output_sizes')
     for i in range(0,len(new_input_ranks),1):
         block_averages+=[[]]
         block_averages_input+=[[]]
@@ -311,6 +347,8 @@ def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,short
             output_conv_size_list[i][j]=even_round(output_conv_size_list[i][j]*(1+scaling_factor))
             rank_averages[i][j] = scaling_factor + threshold
         count=0
+
+    #print(output_conv_size_list, "OUTPUT CONV SIZE LIST IN CALC_OUTPUT_SIZES FUNCTION~~~~~~~~~~~~~~~~~~~~~~!!!")
 
     if final==True:
         GLOBALS.super1_idx = output_conv_size_list[0]
