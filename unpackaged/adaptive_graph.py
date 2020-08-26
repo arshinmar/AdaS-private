@@ -389,6 +389,15 @@ def create_rank_graph(file_name,shortcut_indexes):
     #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
+
+    x1, y1 = 0, 0
+    for i in range(1, len(epoch_num), 3):
+        x2, y2 = epoch_num[i], yaxis[i]
+        m = (y2 - y1)/(x2 - x1)
+        x_val = [x1, x2]
+        y_val = [y1, y2]
+        plt.plot(x_val, y_val, label='{}'.format(m))
+    plt.legend()
     plt.show()
     return True
 
