@@ -361,7 +361,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
 
-def create_rank_graph(file_name,shortcut_indexes):
+def create_rank_graph(file_name,shortcut_indexes, trial):
     #superblock=4
     layer=15
     num_epochs=15
@@ -390,18 +390,18 @@ def create_rank_graph(file_name,shortcut_indexes):
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
 
-    x1, y1 = 0, 0
-    for i in range(1, len(epoch_num), 3):
-        x2, y2 = epoch_num[i], yaxis[i]
-        m = (y2 - y1)/(x2 - x1)
-        x_val = [x1, x2]
-        y_val = [y1, y2]
-        plt.plot(x_val, y_val, label='{}'.format(m))
+    x1, y1 = epoch_num[0], yaxis[0]
+    x2, y2 = break_point, yaxis[break_point]
+    m = round((y2 - y1)/(x2 - x1), 3)
+    x_val = [x1, x2]
+    y_val = [y1, y2]
+    plt.plot(x_val, y_val, label='{}'.format(m))
     plt.legend()
+    plt.title('tial {}'.format(trial))
     plt.show()
-    return True
+    return plt
 
-# create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output1/conv_32,32,32,9_deltaThresh=0.02_minScaleLimit=0.01_beta=0.7_epochpert=20_adaptnum=35/Trials\AdaS_adapt_trial={}_net=DASNet34_0.1_dataset=CIFAR10.xlsx'.format(12),[7,16,29], 12)
 
 '''
 shortcut_indexes=[7,16,29]
