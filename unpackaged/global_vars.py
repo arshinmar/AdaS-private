@@ -35,10 +35,10 @@ super2_idx = [64,64,64,64,64,64,64,64]
 super3_idx = [64,64,64,64,64,64,64,64,64,64,64,64]
 super4_idx = [64,64,64,64,64,64]
 
-super1_kernel_idx=[3,3,3,3,3,3,3]
-super2_kernel_idx=[3,3,3,3,3,3,3,3]
-super3_kernel_idx=[3,3,3,3,3,3,3,3,3,3,3,3]
-super4_kernel_idx=[3,3,3,3,3,3]
+super1_kernel_idx=[9,9,9,9,9,9,9]
+super2_kernel_idx=[9,9,9,9,9,9,9,9]
+super3_kernel_idx=[9,9,9,9,9,9,9,9,9,9,9,9]
+super4_kernel_idx=[9,9,9,9,9,9]
 
 min_kernel_size_1 = None
 
