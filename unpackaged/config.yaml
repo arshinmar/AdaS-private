@@ -17,7 +17,7 @@ init_conv_setting: '64,64,64'
 adapt_trials: 25
 epochs_per_trial: 20
 mapping_condition_threshold: 10
-delta_threshold_kernel: 0.04
+delta_threshold_kernel: 0.03
 delta_threshold: 0.02
 delta_threshold_values:
   - 0.02
