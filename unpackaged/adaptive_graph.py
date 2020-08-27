@@ -455,7 +455,6 @@ def create_rank_graph(file_name,shortcut_indexes):
     return True
 
 #create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
-#adapted_info_graph('adapted_architectures.xlsx',35,'temp.png','Layer Size',-1)
 
 '''
 shortcut_indexes=[7,16,29]
