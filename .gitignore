@@ -30,3 +30,6 @@ unpackaged/models/model.onnx
 unpackaged/models/temp_resnet.onnx
 .DS_Store
 unpackaged/.DS_Store
+unpackaged/temp_checking.py
+.DS_Store
+unpackaged/.DS_Store
