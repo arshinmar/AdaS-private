@@ -3,6 +3,7 @@ from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 from early_stop import EarlyStop
 import os
+import platform
 import time
 import copy
 import pandas as pd
@@ -271,7 +272,10 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     fresh_parameter_size_list = [full_fresh_accuracy,full_fresh_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
     #parameter_data.loc[len(parameter_data)] = save_parameter_size_list
     parameter_data.loc[len(parameter_data)] = fresh_parameter_size_list
-    parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    if platform.system() == 'Windows':
+        parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    else:
+         parameter_data.to_excel(output_path_string_full_train+'/'+'adapted_parameters.xlsx')
 
     return True
 
@@ -438,13 +442,17 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
 def create_trial_data_file(kernel_data,conv_data,delta_info_kernel,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights):
     #parameter_data.to_excel(output_path_string_trials+'\\'+'adapted_parameters.xlsx')
-    delta_info_kernel.to_excel(output_path_string_trials+'\\'+'adapted_delta_info_kernel.xlsx')
-    delta_info.to_excel(output_path_string_trials+'\\'+'adapted_delta_info.xlsx')
-    kernel_data.to_excel(output_path_string_trials+'\\'+'adapted_kernels.xlsx')
-    conv_data.to_excel(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
-    rank_final_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_final.xlsx')
-    rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_kernels.xlsx',output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    delta_info_kernel.to_excel(output_path_string_trials+slash+'adapted_delta_info_kernel.xlsx')
+    delta_info.to_excel(output_path_string_trials+slash+'adapted_delta_info.xlsx')
+    kernel_data.to_excel(output_path_string_trials+slash+'adapted_kernels.xlsx')
+    conv_data.to_excel(output_path_string_trials+slash+'adapted_architectures.xlsx')
+    rank_final_data.to_excel(output_path_string_trials+slash+'adapted_rank_final.xlsx')
+    rank_stable_data.to_excel(output_path_string_trials+slash+'adapted_rank_stable.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+slash+'adapted_kernels.xlsx',output_path_string_trials+slash+'adapted_architectures.xlsx',output_path_string_trials+slash+'adapted_rank_final.xlsx',output_path_string_trials+slash+'adapted_rank_stable.xlsx',output_path_string_graph_files)
     #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
@@ -505,7 +513,11 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             else:
                 print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
                 sys.exit()
-    xlsx_path = str(output_path) +'\\'+ xlsx_name
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    xlsx_path = str(output_path) +slash+ xlsx_name
 
     if GLOBALS.FULL_TRAIN == False:
         filename = \

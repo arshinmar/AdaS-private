@@ -1,6 +1,7 @@
 from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 import os
+import platform
 # import logging
 #import torch.backends.cudnn as cudnn
 import numpy as np
@@ -33,11 +34,14 @@ if __name__ == '__main__':
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         full_train_epochs = range(0, GLOBALS.CONFIG['max_epoch'])
-
-        output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'Trials'
-        output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'model_weights'
-        output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'graph_files'
-        output_path_string_full_train = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'full_train'
+        if platform.system == 'Windows':
+            slash = '\\'
+        else:
+            slash = '/'
+        output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +slash+ 'Trials'
+        output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +slash+ 'model_weights'
+        output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +slash+ 'graph_files'
+        output_path_string_full_train = GLOBALS.OUTPUT_PATH_STRING +slash+ 'full_train'
         output_path_train = output_path / f"Trials"
         output_path_fulltrain = output_path / f"full_train"
 
