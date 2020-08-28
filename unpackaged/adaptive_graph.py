@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import global_vars as GLOBALS
 import ast
 import copy
+import platform
 import time
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
@@ -140,7 +141,10 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
         count+=total_num_epochs
 #    print(epoch_num)
 #    print(accuracies)
-
+    if platform.system == 'Windows':
+        slash = '\\'
+    else: 
+        slash = '/'
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
     #figure=plt.gcf()
     #figure.set_size_inches(16, 9)
@@ -148,7 +152,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
     plt.title('Dynamic DASNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
-    plt.savefig(out_folder+'\\'+'dynamic_accuracy_plot.png',bbox_inches='tight')
+    plt.savefig(out_folder+slash+'dynamic_accuracy_plot.png',bbox_inches='tight')
     #plt.show()
 
 #create_adaptive_graphs()
@@ -423,7 +427,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
 
-def create_rank_graph(file_name,shortcut_indexes):
+def create_rank_graph(file_name,shortcut_indexes, conv):
     #superblock=4
     layer=15
     num_epochs=15
@@ -444,17 +448,30 @@ def create_rank_graph(file_name,shortcut_indexes):
     #print(yaxis,'YAXIS VALUES')
     break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
 
-    fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
+    fig=plt.plot(epoch_num,yaxis, marker='o', color='r', label='_nolegend_')
     fig=plt.axvline(x=break_point)
 
     plt.ylim([0,0.35])
     #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
+
+    x1, y1 = epoch_num[0], yaxis[0]
+    x2, y2 = break_point, yaxis[break_point]
+    m = round((y2 - y1)/(x2 - x1), 3)
+    x_val = [x1, x2]
+    y_val = [y1, y2]
+    plt.plot(x_val, y_val, label='Slope {}'.format(m), color='g')
+    plt.legend()
+    plt.title('Channel Size {}'.format(conv))
+    plt.xlabel('Epoch')
+    plt.ylabel('Rank')
     plt.show()
     return True
 
+# create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output1/conv_32,32,32,9_deltaThresh=0.02_minScaleLimit=0.01_beta=0.7_epochpert=20_adaptnum=35/Trials\AdaS_adapt_trial=1_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '128')
 #create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+#adapted_info_graph('adapted_architectures.xlsx',35,'temp.png','Layer Size',-1)
 
 '''
 shortcut_indexes=[7,16,29]
