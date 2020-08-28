@@ -529,18 +529,18 @@ def run_epochs(trial, epochs, train_loader, test_loader,
 
     if GLOBALS.FULL_TRAIN == False:
         filename = \
-            + slash + f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+            slash + f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
             f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     else:
         if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
             filename = \
-                + slash + f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
         elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
             filename = \
-                + slash + f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
