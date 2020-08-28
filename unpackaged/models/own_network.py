@@ -188,9 +188,6 @@ class Network(nn.Module):
 
         self.index=self.superblock1_indexes+self.superblock2_indexes+self.superblock3_indexes+self.superblock4_indexes
         self.kernel_sizes=self.superblock1_kernels+self.superblock2_kernels+self.superblock3_kernels+self.superblock4_kernels
-        print(self.kernel_sizes,'KERNEL SIZES')
-        print(len(self.index),'INDEX LENGTH')
-        print(len(self.kernel_sizes),'KERNEL LENGTH')
 
         self.num_classes=num_classes
         self.conv1 = nn.Conv2d(image_channels, self.index[0], kernel_size=self.kernel_sizes[0], stride=1, padding=int((self.kernel_sizes[0]-1)/2), bias=False)
