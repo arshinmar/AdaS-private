@@ -10,14 +10,14 @@ n_trials: 1
 
 beta: 0.7
 beta_full: 0.95
-full_train_only: True
+full_train_only: False
 init_lr: 0.1
-init_conv_setting: '64,64,64'
+init_conv_setting: '64,15'
 
 adapt_trials: 25
 epochs_per_trial: 20
 mapping_condition_threshold: 10
-delta_threshold_kernel: 0.03
+delta_threshold_kernel: 0.15
 delta_threshold: 0.02
 delta_threshold_values:
   - 0.02
