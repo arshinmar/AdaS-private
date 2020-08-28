@@ -466,23 +466,27 @@ def get_output_sizes(file_name):
 
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"AdaS_adapt_trial={trial}_" +\
+                + slash + f"AdaS_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"AdaS_last_iter_fulltrain_trial={trial}_" +\
+                    + slash + f"AdaS_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"AdaS_fresh_fulltrain_trial={trial}_" +\
+                    + slash + f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
@@ -493,20 +497,20 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     else:
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"StepLR_adapt_trial={trial}_" +\
+                + slash + f"StepLR_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"StepLR_last_iter_fulltrain_trial={trial}_" +\
+                    + slash + f"StepLR_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"StepLR_fresh_fulltrain_trial={trial}_" +\
+                    + slash + f"StepLR_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
@@ -521,18 +525,18 @@ def run_epochs(trial, epochs, train_loader, test_loader,
 
     if GLOBALS.FULL_TRAIN == False:
         filename = \
-            f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+            + slash + f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
             f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     else:
         if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
             filename = \
-                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                + slash + f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
         elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
             filename = \
-                f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                + slash + f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
