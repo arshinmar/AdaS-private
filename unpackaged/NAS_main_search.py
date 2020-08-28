@@ -1,6 +1,7 @@
 from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 import os
+import platform
 # import logging
 #import torch.backends.cudnn as cudnn
 import numpy as np
@@ -33,11 +34,14 @@ if __name__ == '__main__':
 
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
         full_train_epochs = range(0, GLOBALS.CONFIG['max_epoch'])
-
-        output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'Trials'
-        output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'model_weights'
-        output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'graph_files'
-        output_path_string_full_train = GLOBALS.OUTPUT_PATH_STRING +'\\'+ 'full_train'
+        if platform.system == 'Windows':
+            slash = '\\'
+        else:
+            slash = '/'
+        output_path_string_trials = GLOBALS.OUTPUT_PATH_STRING +slash+ 'Trials'
+        output_path_string_modelweights = GLOBALS.OUTPUT_PATH_STRING +slash+ 'model_weights'
+        output_path_string_graph_files = GLOBALS.OUTPUT_PATH_STRING +slash+ 'graph_files'
+        output_path_string_full_train = GLOBALS.OUTPUT_PATH_STRING +slash+ 'full_train'
         output_path_train = output_path / f"Trials"
         output_path_fulltrain = output_path / f"full_train"
 
@@ -61,7 +65,7 @@ if __name__ == '__main__':
         else:
             try:
                 #print(int('booger'))
-                output_sizes=get_output_sizes(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
+                output_sizes=get_output_sizes(output_path_string_trials+slash+'adapted_architectures.xlsx')
             except:
                 output_sizes=[[32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32,32,32,32,32],[32,32,32,32,32,32]] #WHATEVER WE WANT.
 
@@ -69,8 +73,8 @@ if __name__ == '__main__':
 
         run_fresh_full_train(train_loader,test_loader,device,output_sizes,kernel_sizes,full_train_epochs,output_path_fulltrain)
 
-        create_full_data_file(GLOBALS.NET,output_path_string_full_train+'\\'+f"StepLR_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
-                                     output_path_string_full_train+'\\'+f"StepLR_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+        create_full_data_file(GLOBALS.NET,output_path_string_full_train+slash+f"StepLR_last_iter_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
+                                     output_path_string_full_train+slash+f"StepLR_fresh_fulltrain_trial=0_net={GLOBALS.CONFIG['network']}_dataset={GLOBALS.CONFIG['dataset']}.xlsx",
                                      output_path_string_full_train)
 
     print('Done Full Train')

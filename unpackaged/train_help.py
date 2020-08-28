@@ -3,6 +3,7 @@ from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 from early_stop import EarlyStop
 import os
+import platform
 import time
 import copy
 import pandas as pd
@@ -271,7 +272,10 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     fresh_parameter_size_list = [full_fresh_accuracy,full_fresh_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
     #parameter_data.loc[len(parameter_data)] = save_parameter_size_list
     parameter_data.loc[len(parameter_data)] = fresh_parameter_size_list
-    parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    if platform.system() == 'Windows':
+        parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    else:
+         parameter_data.to_excel(output_path_string_full_train+'/'+'adapted_parameters.xlsx')
 
     return True
 
@@ -307,14 +311,18 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,kernel_siz
     return True
 
 def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
+    if platform.system == "Windows":
+        slash = '\\'
+    else:
+        slash = '/'
     create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
-    kernel_path=out_folder+'\\'+'dynamic_kernel_Size_Plot.png'
-    conv_path=out_folder+'\\'+'dynamic_layer_Size_Plot.png'
-    rank_final_path=out_folder+'\\'+'dynamic_rank_final.png'
-    rank_stable_path=out_folder+'\\'+'dynamic_rank_stable.png'
-    output_condition_path=out_folder+'\\'+'dynamic_output_condition.png'
-    input_condition_path=out_folder+'\\'+'dynamic_input_condition.png'
-    network_visualize_path=out_folder+'\\'+'dynamic_network_Size_Plot.png'
+    kernel_path=out_folder+slash+'dynamic_kernel_Size_Plot.png'
+    conv_path=out_folder+slash+'dynamic_layer_Size_Plot.png'
+    rank_final_path=out_folder+slash+'dynamic_rank_final.png'
+    rank_stable_path=out_folder+slash+'dynamic_rank_stable.png'
+    output_condition_path=out_folder+slash+'dynamic_output_condition.png'
+    input_condition_path=out_folder+slash+'dynamic_input_condition.png'
+    network_visualize_path=out_folder+slash+'dynamic_network_Size_Plot.png'
     '''create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path, 'Layer Size')
     #create_layer_plot(rank_final_file_name,GLOBALS.CONFIG['adapt_trials'],rank_final_path, 'Final Rank')
     #create_layer_plot(rank_stable_file_name,GLOBALS.CONFIG['adapt_trials'],rank_stable_path, 'Stable Rank')'''
@@ -438,13 +446,17 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
 
 def create_trial_data_file(kernel_data,conv_data,delta_info_kernel,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights):
     #parameter_data.to_excel(output_path_string_trials+'\\'+'adapted_parameters.xlsx')
-    delta_info_kernel.to_excel(output_path_string_trials+'\\'+'adapted_delta_info_kernel.xlsx')
-    delta_info.to_excel(output_path_string_trials+'\\'+'adapted_delta_info.xlsx')
-    kernel_data.to_excel(output_path_string_trials+'\\'+'adapted_kernels.xlsx')
-    conv_data.to_excel(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
-    rank_final_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_final.xlsx')
-    rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_kernels.xlsx',output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    delta_info_kernel.to_excel(output_path_string_trials+slash+'adapted_delta_info_kernel.xlsx')
+    delta_info.to_excel(output_path_string_trials+slash+'adapted_delta_info.xlsx')
+    kernel_data.to_excel(output_path_string_trials+slash+'adapted_kernels.xlsx')
+    conv_data.to_excel(output_path_string_trials+slash+'adapted_architectures.xlsx')
+    rank_final_data.to_excel(output_path_string_trials+slash+'adapted_rank_final.xlsx')
+    rank_stable_data.to_excel(output_path_string_trials+slash+'adapted_rank_stable.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+slash+'adapted_kernels.xlsx',output_path_string_trials+slash+'adapted_architectures.xlsx',output_path_string_trials+slash+'adapted_rank_final.xlsx',output_path_string_trials+slash+'adapted_rank_stable.xlsx',output_path_string_graph_files)
     #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
@@ -458,23 +470,28 @@ def get_output_sizes(file_name):
 
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    print('------------------------------' + slash)
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"AdaS_adapt_trial={trial}_" +\
+                slash + f"AdaS_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"AdaS_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"AdaS_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
@@ -485,42 +502,46 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     else:
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"StepLR_adapt_trial={trial}_" +\
+                slash + f"StepLR_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"StepLR_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"StepLR_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             else:
                 print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
                 sys.exit()
-    xlsx_path = str(output_path) +'\\'+ xlsx_name
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    xlsx_path = str(output_path) +slash+ xlsx_name
 
     if GLOBALS.FULL_TRAIN == False:
         filename = \
-            f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+            slash + f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
             f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     else:
         if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
             filename = \
-                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
         elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
             filename = \
-                f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
