@@ -222,9 +222,7 @@ def parse_config(
         raise ValueError(
             'config.yaml: AdaS can only be used with SGD')
 
-    config['n_trials'] = smart_string_to_int(
-        config['n_trials'],
-        e='config.yaml: n_trials must be an int')
+
     config['beta'] = smart_string_to_float(
         config['beta'],
         e='config.yaml: beta must be a float')

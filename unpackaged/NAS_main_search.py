@@ -15,15 +15,15 @@ if __name__ == '__main__':
     args(parser)
     args_true = parser.parse_args()
     train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0)
-    print(GLOBALS.CONFIG['delta_threshold_values'])
-    for i in GLOBALS.CONFIG['delta_threshold_values']: #Where threshold_values is a list of threshold values we want to iterate over?
+    print(GLOBALS.CONFIG['delta_threshold_kernel_values'])
+    for i in GLOBALS.CONFIG['delta_threshold_kernel_values']: #Where threshold_values is a list of threshold values we want to iterate over?
         GLOBALS.FIRST_INIT = True
         parser = ArgumentParser(description=__doc__)
         args(parser)
         args_true = parser.parse_args()
-        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0,new_threshold=i)
+        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,0,new_threshold_kernel=i)
 
-        output_path = output_path / f"conv_{GLOBALS.CONFIG['init_conv_setting']}_deltaThresh={GLOBALS.CONFIG['delta_threshold']}_minScaleLimit={GLOBALS.CONFIG['min_scale_limit']}_beta={GLOBALS.CONFIG['beta']}_epochpert={GLOBALS.CONFIG['epochs_per_trial']}_adaptnum={GLOBALS.CONFIG['adapt_trials']}"
+        output_path = output_path / f"conv_{GLOBALS.CONFIG['init_conv_setting']}_deltaThresh={GLOBALS.CONFIG['delta_threshold']}_kernelthresh={GLOBALS.CONFIG['delta_threshold_kernel']}_epochpert={GLOBALS.CONFIG['epochs_per_trial']}_adaptnum={GLOBALS.CONFIG['adapt_trials']}"
         GLOBALS.OUTPUT_PATH_STRING = str(output_path)
 
         if not os.path.exists(GLOBALS.OUTPUT_PATH_STRING):
