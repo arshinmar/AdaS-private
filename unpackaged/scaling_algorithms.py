@@ -209,7 +209,7 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
 
     for superblock in range(len(gray_values)):
         gray_averages+=[even_round(np.average(gray_values[superblock]))]
-        
+
     for superblock in range(len(new_channel_sizes)):
         if superblock==0:
             starter=0

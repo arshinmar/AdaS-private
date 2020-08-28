@@ -82,11 +82,17 @@ class Metrics():
         factorized_index_4 = np.zeros(len(self.conv_indices), dtype=bool)
         for block_index in range(len(self.conv_indices)):
             layer_tensor = self.net_blocks[self.conv_indices[block_index]].data
+
             tensor_size = layer_tensor.shape
             mode_12_unfold = layer_tensor.permute(3, 2, 1, 0).cpu()
             mode_12_unfold = torch.reshape(
                 mode_12_unfold, [tensor_size[3] * tensor_size[2],
                                  tensor_size[1] * tensor_size[0]])
+            if layer_tensor.shape[3] > 3:
+                difference=int((layer_tensor.shape[3]-3)/2)
+                layer_tensor=layer_tensor[:,:,difference:-difference,difference:-difference]
+
+            tensor_size = layer_tensor.shape
             mode_3_unfold = layer_tensor.permute(1, 0, 2, 3).cpu()
             mode_3_unfold = torch.reshape(
                 mode_3_unfold, [tensor_size[1], tensor_size[0] *
