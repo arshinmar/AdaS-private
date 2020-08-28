@@ -474,6 +474,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
         slash = '\\'
     else:
         slash = '/'
+    print('------------------------------' + slash)
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
