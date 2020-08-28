@@ -477,20 +477,20 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                + slash + f"AdaS_adapt_trial={trial}_" +\
+                slash + f"AdaS_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    + slash + f"AdaS_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    + slash + f"AdaS_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
@@ -501,20 +501,20 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     else:
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                + slash + f"StepLR_adapt_trial={trial}_" +\
+                slash + f"StepLR_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    + slash + f"StepLR_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    + slash + f"StepLR_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
