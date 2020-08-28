@@ -423,7 +423,7 @@ def stacked_bar_plot(adapted_file_name, path, trial_increment=2):
     figure.set_size_inches(11.4, 5.34)
     plt.savefig(path,bbox_inches='tight')
 
-def create_rank_graph(file_name,shortcut_indexes):
+def create_rank_graph(file_name,shortcut_indexes, conv):
     #superblock=4
     layer=15
     num_epochs=15
@@ -444,17 +444,30 @@ def create_rank_graph(file_name,shortcut_indexes):
     #print(yaxis,'YAXIS VALUES')
     break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
 
-    fig=plt.plot(epoch_num,yaxis, label='ranks vs epoch', marker='o', color='r')
+    fig=plt.plot(epoch_num,yaxis, marker='o', color='r', label='_nolegend_')
     fig=plt.axvline(x=break_point)
 
     plt.ylim([0,0.35])
     #x_smooth,y_smooth=our_fit(np.asarray(epoch_num),np.asarray(yaxis))
     #fig=plt.plot(x_smooth,y_smooth,label='smooth curve', color='b')
     print(slope_clone(yaxis,break_point),'--------------------------SLOPE OF GRAPH--------------------------')
-    plt.show()
-    return True
 
+    x1, y1 = epoch_num[0], yaxis[0]
+    x2, y2 = break_point, yaxis[break_point]
+    m = round((y2 - y1)/(x2 - x1), 3)
+    x_val = [x1, x2]
+    y_val = [y1, y2]
+    plt.plot(x_val, y_val, label='Slope {}'.format(m), color='g')
+    plt.legend()
+    plt.title('Channel Size {}'.format(conv))
+    plt.xlabel('Epoch')
+    plt.ylabel('Rank')
+    plt.show()
+    return plt
+
+# create_rank_graph('/mnt/c/users/andre/desktop/multimedia-lab/output1/conv_32,32,32,9_deltaThresh=0.02_minScaleLimit=0.01_beta=0.7_epochpert=20_adaptnum=35/Trials\AdaS_adapt_trial=1_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29], '128')
 #create_rank_graph('AdaS_adapt_trial=0_net=DASNet34_0.1_dataset=CIFAR10.xlsx',[7,16,29])
+#adapted_info_graph('adapted_architectures.xlsx',35,'temp.png','Layer Size',-1)
 
 '''
 shortcut_indexes=[7,16,29]
