@@ -10,7 +10,7 @@ n_trials: 1
 
 beta: 0.7
 beta_full: 0.95
-full_train_only: False
+full_train_only: True
 init_lr: 0.1
 init_conv_setting: '64,64,64'
 
