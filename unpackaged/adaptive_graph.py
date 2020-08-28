@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import global_vars as GLOBALS
 import ast
 import copy
+import platform
 import time
 def calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,threshold,final=True):
     #Note that input_ranks/output_ranks may have a different size than conv_size_list
@@ -140,7 +141,10 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
         count+=total_num_epochs
 #    print(epoch_num)
 #    print(accuracies)
-
+    if platform.system == 'Windows':
+        slash = '\\'
+    else: 
+        slash = '/'
     fig=plt.plot(epoch_num,accuracies, label='accuracy vs epoch', marker='o', color='r')
     #figure=plt.gcf()
     #figure.set_size_inches(16, 9)
@@ -148,7 +152,7 @@ def create_adaptive_graphs(file_name,num_epochs,num_trials,out_folder):
     plt.xlabel('Epoch')
     plt.ylabel('Test Accuracy (%)')
     plt.title('Dynamic DASNet: Test Accuracy vs Epoch (init_conv_size='+GLOBALS.CONFIG['init_conv_setting']+' delta_thresh='+str(GLOBALS.CONFIG['delta_threshold'])+')')
-    plt.savefig(out_folder+'\\'+'dynamic_accuracy_plot.png',bbox_inches='tight')
+    plt.savefig(out_folder+slash+'dynamic_accuracy_plot.png',bbox_inches='tight')
     #plt.show()
 
 #create_adaptive_graphs()

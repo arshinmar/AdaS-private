@@ -311,14 +311,18 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,kernel_siz
     return True
 
 def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
+    if platform.system == "Windows":
+        slash = '\\'
+    else:
+        slash = '/'
     create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
-    kernel_path=out_folder+'\\'+'dynamic_kernel_Size_Plot.png'
-    conv_path=out_folder+'\\'+'dynamic_layer_Size_Plot.png'
-    rank_final_path=out_folder+'\\'+'dynamic_rank_final.png'
-    rank_stable_path=out_folder+'\\'+'dynamic_rank_stable.png'
-    output_condition_path=out_folder+'\\'+'dynamic_output_condition.png'
-    input_condition_path=out_folder+'\\'+'dynamic_input_condition.png'
-    network_visualize_path=out_folder+'\\'+'dynamic_network_Size_Plot.png'
+    kernel_path=out_folder+slash+'dynamic_kernel_Size_Plot.png'
+    conv_path=out_folder+slash+'dynamic_layer_Size_Plot.png'
+    rank_final_path=out_folder+slash+'dynamic_rank_final.png'
+    rank_stable_path=out_folder+slash+'dynamic_rank_stable.png'
+    output_condition_path=out_folder+slash+'dynamic_output_condition.png'
+    input_condition_path=out_folder+slash+'dynamic_input_condition.png'
+    network_visualize_path=out_folder+slash+'dynamic_network_Size_Plot.png'
     '''create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path, 'Layer Size')
     #create_layer_plot(rank_final_file_name,GLOBALS.CONFIG['adapt_trials'],rank_final_path, 'Final Rank')
     #create_layer_plot(rank_stable_file_name,GLOBALS.CONFIG['adapt_trials'],rank_stable_path, 'Stable Rank')'''
