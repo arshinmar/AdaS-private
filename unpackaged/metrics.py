@@ -88,11 +88,7 @@ class Metrics():
             mode_12_unfold = torch.reshape(
                 mode_12_unfold, [tensor_size[3] * tensor_size[2],
                                  tensor_size[1] * tensor_size[0]])
-            if layer_tensor.shape[3] > 3:
-                difference=int((layer_tensor.shape[3]-3)/2)
-                layer_tensor=layer_tensor[:,:,difference:-difference,difference:-difference]
 
-            tensor_size = layer_tensor.shape
             mode_3_unfold = layer_tensor.permute(1, 0, 2, 3).cpu()
             mode_3_unfold = torch.reshape(
                 mode_3_unfold, [tensor_size[1], tensor_size[0] *
