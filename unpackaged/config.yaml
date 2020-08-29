@@ -6,24 +6,27 @@ lr_scheduler: 'AdaS' # options: AdaS (with SGD), StepLR, CosineAnnealingWarmRest
 
 
 ###### Suggested Tune ######
-n_trials: 1
-
+init_lr: 0.1
 beta: 0.7
 beta_full: 0.95
 full_train_only: False
-init_lr: 0.1
-init_conv_setting: '64,15'
+init_conv_setting: '64,64'
 
-adapt_trials: 20
+adapt_trials: 25
+adapt_trials_kernel: 10
 epochs_per_trial: 20
-mapping_condition_threshold: 10
-delta_threshold_kernel: 0.15
-delta_threshold: 0.02
-delta_threshold_values:
-  - 0.02
-kernel_adapt: 1 #0 for NO kernel adaptations, 1 for kernel adaptions
 
-min_scale_limit: 0.01
+mapping_condition_threshold: 10
+delta_threshold_kernel: 0.035
+delta_threshold: 0.01
+delta_threshold_values:
+  - 0.01
+delta_threshold_kernel_values:
+  - 0.035
+  - 0.08
+kernel_adapt: 1 #0 for NO kernel adaptations, 1 for kernel adaptions
+parameter_type: 'channel' #'both' for simultaneously searching kernel and conv, else 'channel' for consecutive channel/kernel search
+
 max_kernel_size: 9
 min_kernel_size: 3
 min_kernel_size_2: 1
@@ -31,9 +34,10 @@ max_conv_size: 256
 min_conv_size: 32
 
 stable_epoch: 0
+min_scale_limit: 0.01
 factor_scale: 0.2
 factor_scale_kernel: 1
-blocks_per_superblock: -1
+blocks_per_superblock: -1 #set to -1 for DasNet34 structure, 2 for all 2s, 3 for all 3s
 
 ###### Suggested Default ######
 max_epoch: 250

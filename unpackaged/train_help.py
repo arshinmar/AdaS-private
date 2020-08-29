@@ -3,6 +3,7 @@ from argparse import Namespace as APNamespace, _SubParsersAction,ArgumentParser
 from pathlib import Path
 from early_stop import EarlyStop
 import os
+import platform
 import time
 import copy
 import pandas as pd
@@ -25,7 +26,6 @@ import torch.backends.cudnn as cudnn
 from scaling_algorithms import *
 import ast
 import matplotlib.pyplot as plt
-
 from utils import parse_config
 from metrics import Metrics
 from models import get_net
@@ -72,7 +72,7 @@ def args(sub_parser: _SubParsersAction):
         help="Flag: CPU bound training")
     sub_parser.set_defaults(cpu=False)
 
-def initialize(args: APNamespace, new_network, beta=None, new_threshold=None, scheduler=None, trial=-1):
+def initialize(args: APNamespace, new_network, beta=None, new_threshold=None, new_threshold_kernel=None, scheduler=None, trial=-1):
     def get_loss(loss: str) -> torch.nn.Module:
         return torch.nn.CrossEntropyLoss() if loss == 'cross_entropy' else None
 
@@ -189,7 +189,8 @@ def initialize(args: APNamespace, new_network, beta=None, new_threshold=None, sc
     if new_threshold != None:
         GLOBALS.CONFIG['delta_threshold']=new_threshold
 
-
+    if new_threshold_kernel != None:
+        GLOBALS.CONFIG['delta_threshold_kernel']=new_threshold_kernel
 
     optimizer, scheduler = get_optimizer_scheduler(
             net_parameters=GLOBALS.NET.parameters(),
@@ -271,7 +272,10 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     fresh_parameter_size_list = [full_fresh_accuracy,full_fresh_loss,int(macs)/1000000000,2*int(macs)/1000000000,int(params)/1000000]
     #parameter_data.loc[len(parameter_data)] = save_parameter_size_list
     parameter_data.loc[len(parameter_data)] = fresh_parameter_size_list
-    parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    if platform.system() == 'Windows':
+        parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
+    else:
+         parameter_data.to_excel(output_path_string_full_train+'/'+'adapted_parameters.xlsx')
 
     return True
 
@@ -307,14 +311,18 @@ def run_fresh_full_train(train_loader,test_loader,device,output_sizes,kernel_siz
     return True
 
 def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_file_name,rank_final_file_name,rank_stable_file_name,out_folder):
+    if platform.system == "Windows":
+        slash = '\\'
+    else:
+        slash = '/'
     create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
-    kernel_path=out_folder+'\\'+'dynamic_kernel_Size_Plot.png'
-    conv_path=out_folder+'\\'+'dynamic_layer_Size_Plot.png'
-    rank_final_path=out_folder+'\\'+'dynamic_rank_final.png'
-    rank_stable_path=out_folder+'\\'+'dynamic_rank_stable.png'
-    output_condition_path=out_folder+'\\'+'dynamic_output_condition.png'
-    input_condition_path=out_folder+'\\'+'dynamic_input_condition.png'
-    network_visualize_path=out_folder+'\\'+'dynamic_network_Size_Plot.png'
+    kernel_path=out_folder+slash+'dynamic_kernel_Size_Plot.png'
+    conv_path=out_folder+slash+'dynamic_layer_Size_Plot.png'
+    rank_final_path=out_folder+slash+'dynamic_rank_final.png'
+    rank_stable_path=out_folder+slash+'dynamic_rank_stable.png'
+    output_condition_path=out_folder+slash+'dynamic_output_condition.png'
+    input_condition_path=out_folder+slash+'dynamic_input_condition.png'
+    network_visualize_path=out_folder+slash+'dynamic_network_Size_Plot.png'
     '''create_layer_plot(conv_data_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path, 'Layer Size')
     #create_layer_plot(rank_final_file_name,GLOBALS.CONFIG['adapt_trials'],rank_final_path, 'Final Rank')
     #create_layer_plot(rank_stable_file_name,GLOBALS.CONFIG['adapt_trials'],rank_stable_path, 'Stable Rank')'''
@@ -332,119 +340,147 @@ def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_fil
         shortcut_indexes+=[counter]
     plt.clf()
     stacked_bar_plot(adapted_conv_file_name, network_visualize_path)
-    plt.clf()
-    adapted_info_graph(adapted_kernel_file_name,GLOBALS.CONFIG['adapt_trials'],kernel_path,'Kernel Size',last_epoch)
+    if GLOBALS.CONFIG['kernel_adapt']!=0:
+        plt.clf()
+        adapted_info_graph(adapted_kernel_file_name,GLOBALS.CONFIG['adapt_trials_kernel'],kernel_path,'Kernel Size',last_epoch)
     plt.clf()
     adapted_info_graph(adapted_conv_file_name,GLOBALS.CONFIG['adapt_trials'],conv_path,'Layer Size',last_epoch)
     plt.clf()
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.total_trials, len(GLOBALS.index_used)+3, rank_final_path,'Final Rank', 'out_rank_epoch_',shortcut_indexes,last_epoch)
     plt.clf()
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.total_trials, len(GLOBALS.index_used)+3, rank_stable_path,'Stable Rank', 'out_rank_epoch_',shortcut_indexes,stable_epoch)
     plt.clf()
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.total_trials, len(GLOBALS.index_used)+3, output_condition_path,'Output Condition', 'out_condition_epoch_',shortcut_indexes,last_epoch)
     plt.clf()
-    trial_info_graph(trial_info_file_name, GLOBALS.CONFIG['adapt_trials'], len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
+    trial_info_graph(trial_info_file_name, GLOBALS.total_trials, len(GLOBALS.index_used)+3, input_condition_path,'Input Condition', 'in_condition_epoch_',shortcut_indexes,last_epoch)
     plt.clf()
     return True
 
 def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output_path_train, new_threshold=None):
-    conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
-    kernel_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
-    rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
-    rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+    last_operation,factor_scale,delta_percentage,last_operation_kernel,factor_scale_kernel,delta_percentage_kernel=[],[],[],[],[],[]
+    parameter_type=GLOBALS.CONFIG['parameter_type']
 
-    conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx]
-    kernel_size_list=[GLOBALS.super1_kernel_idx,GLOBALS.super2_kernel_idx,GLOBALS.super3_kernel_idx,GLOBALS.super4_kernel_idx]
-
-    conv_data.loc[0] = conv_size_list
-    kernel_data.loc[0] = kernel_size_list
-    delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
-    delta_info_kernel = pd.DataFrame(columns=['delta_percentage_kernel','factor_scale_kernel','last_operation_kernel'])
-
-    run_epochs(0, epochs, train_loader, test_loader,
-                           device, optimizer, scheduler, output_path_train)
-
-    print('~~~First run_epochs done.~~~')
-    last_operation,factor_scale,delta_percentage=[],[],[]
-    last_operation_kernel,factor_scale_kernel,delta_percentage_kernel=[],[],[]
-
-    for i in range(1,GLOBALS.CONFIG['adapt_trials']):
-
-        input_ranks, output_ranks = get_max_ranks_by_layer(path=GLOBALS.EXCEL_PATH)
-        counter=-1
+    kernel_begin_trial=0
+    def check_last_operation(last_operation,last_operation_kernel,kernel_begin_trial):
+        all_channels_stopped=True
+        for blah in last_operation:
+            for inner in blah:
+                if inner!=0:
+                    all_channels_stopped=False
+        all_kernels_stopped=True
+        #if kernel_begin_trial!=0:
+        for blah in last_operation_kernel:
+            for inner in blah:
+                if inner!=0:
+                    all_kernels_stopped=False
+        return all_channels_stopped,all_kernels_stopped
+    def get_shortcut_indexes(conv_size_list):
         shortcut_indexes=[]
-
+        counter=-1
         for j in conv_size_list:
             if len(shortcut_indexes)==len(conv_size_list)-1:
                 break
             counter+=len(j) + 1
             shortcut_indexes+=[counter]
+        return shortcut_indexes
+    def initialize_dataframes_and_lists():
+        conv_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+        kernel_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+        rank_final_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+        rank_stable_data = pd.DataFrame(columns=['superblock1','superblock2','superblock3','superblock4'])
+        conv_size_list=[GLOBALS.super1_idx,GLOBALS.super2_idx,GLOBALS.super3_idx,GLOBALS.super4_idx]
+        kernel_size_list=[GLOBALS.super1_kernel_idx,GLOBALS.super2_kernel_idx,GLOBALS.super3_kernel_idx,GLOBALS.super4_kernel_idx]
 
+        conv_data.loc[0] = conv_size_list
+        kernel_data.loc[0] = kernel_size_list
+        delta_info = pd.DataFrame(columns=['delta_percentage','factor_scale','last_operation'])
+        delta_info_kernel = pd.DataFrame(columns=['delta_percentage_kernel','factor_scale_kernel','last_operation_kernel'])
+        return conv_data,kernel_data,rank_final_data,rank_stable_data,delta_info,delta_info_kernel,conv_size_list,kernel_size_list
+    def should_break(i,all_channels_stopped,all_kernels_stopped,kernel_begin_trial,parameter_type):
+        break_loop=False
+        if (all_channels_stopped==True and kernel_begin_trial==0) or i==GLOBALS.CONFIG['adapt_trials']:
+            GLOBALS.CONFIG['adapt_trials']=i
+            parameter_type='kernel'
+            kernel_begin_trial=i
+            if GLOBALS.CONFIG['adapt_trials_kernel']==0 or GLOBALS.CONFIG['kernel_adapt']==0:
+                print('ACTIVATED IF STATEMENT 1 FOR SOME STUPID REASON')
+                break_loop=True
 
-        index_conv_size_list=GLOBALS.index
-        print('GLOBALS.EXCEL_PATH:{}'.format(GLOBALS.EXCEL_PATH))
-        start=time.time()
+        if all_kernels_stopped==True or i==kernel_begin_trial+GLOBALS.CONFIG['adapt_trials_kernel']:# and kernel_begin_trial!=0:
+            print('ACTIVATED IF STATEMENT 2 FOR SOME EVEN STUPIDER REASON')
+            GLOBALS.total_trials=i
+            break_loop=True
+        return kernel_begin_trial,parameter_type,break_loop
+
+    #####################################################################################################################################
+    conv_data,kernel_data,rank_final_data,rank_stable_data,delta_info,delta_info_kernel,conv_size_list,kernel_size_list=initialize_dataframes_and_lists()
+    shortcut_indexes=get_shortcut_indexes(conv_size_list)
+    run_epochs(0, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_train)
+    print('~~~First run_epochs done.~~~')
+
+    if (GLOBALS.CONFIG['kernel_adapt']==0):
+        GLOBALS.CONFIG['adapt_trials_kernel']=0
+
+    GLOBALS.total_trials=GLOBALS.CONFIG['adapt_trials']+GLOBALS.CONFIG['adapt_trials_kernel']
+    for i in range(1,GLOBALS.total_trials):
+        if (GLOBALS.CONFIG['kernel_adapt']==0):
+            GLOBALS.CONFIG['adapt_trials_kernel']=0
+        if kernel_begin_trial!=0:
+            if (i > (GLOBALS.total_trials//2 - kernel_begin_trial)) and all_channels_stopped==True:
+                GLOBALS.min_kernel_size_1=GLOBALS.CONFIG['min_kernel_size']
+                GLOBALS.CONFIG['min_kernel_size']=GLOBALS.CONFIG['min_kernel_size_2']
         '------------------------------------------------------------------------------------------------------------------------------------------------'
-        #output_sizes=calculate_correct_output_sizes(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])[0]
-        #output_sizes=calculate_correct_output_sizes_averaged(input_ranks,output_ranks,conv_size_list,shortcut_indexes,GLOBALS.CONFIG['adapt_rank_threshold'])
-
-        if i > GLOBALS.CONFIG['adapt_trials']//2:
-            GLOBALS.min_kernel_size_1=GLOBALS.CONFIG['min_kernel_size']
-            GLOBALS.CONFIG['min_kernel_size']=GLOBALS.CONFIG['min_kernel_size_2']
-        last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes, new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operation, factor_scale, delta_percentage, last_operation_kernel, factor_scale_kernel, delta_percentage_kernel)
-
-
-        zero_value=True
-        for blah in last_operation:
-            for inner in blah:
-                if inner!=0:
-                    zero_value=False
+        last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes, new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable = delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operation, factor_scale, delta_percentage, last_operation_kernel, factor_scale_kernel, delta_percentage_kernel,parameter_type=parameter_type)
         '------------------------------------------------------------------------------------------------------------------------------------------------'
-        end=time.time()
-        print((end-start),'Time ELAPSED FOR SCALING in TRIAL '+str(i))
+        print(last_operation_kernel, 'LAST OPERATION KERNEL FOR TRIAL '+str(i))
+        all_channels_stopped, all_kernels_stopped = check_last_operation(last_operation,last_operation_kernel,kernel_begin_trial)
+        print(all_channels_stopped,all_kernels_stopped, 'BREAK VALUES!')
+        kernel_begin_trial,parameter_type,break_loop = should_break(i,all_channels_stopped,all_kernels_stopped,kernel_begin_trial,parameter_type)
+        if break_loop==True: break
+
         last_operation_copy, factor_scale_copy, delta_percentage_copy, rank_averages_final_copy, rank_averages_stable_copy = copy.deepcopy(last_operation),copy.deepcopy(factor_scale),copy.deepcopy(delta_percentage),copy.deepcopy(rank_averages_final),copy.deepcopy(rank_averages_stable)
         last_operation_kernel_copy, factor_scale_kernel_copy, delta_percentage_kernel_copy = copy.deepcopy(last_operation_kernel), copy.deepcopy(factor_scale_kernel), copy.deepcopy(delta_percentage_kernel)
-
         conv_size_list=copy.deepcopy(new_channel_sizes)
         kernel_size_list=copy.deepcopy(new_kernel_sizes)
 
-        conv_data.loc[i] = new_channel_sizes
-        kernel_data.loc[i] = new_kernel_sizes
-
+        print('~~~Writing to Dataframe~~~')
+        if parameter_type=='channel' or parameter_type=='both' or GLOBALS.CONFIG['kernel_adapt']==0:
+            conv_data.loc[i] = new_channel_sizes
+            delta_info.loc[i] = [delta_percentage_copy,factor_scale_copy,last_operation_copy]
+        elif parameter_type=='kernel' or parameter_type=='both':
+            kernel_data.loc[i-kernel_begin_trial] = new_kernel_sizes
+            delta_info_kernel.loc[i-kernel_begin_trial] = [delta_percentage_kernel_copy,factor_scale_kernel_copy,last_operation_kernel_copy]
         rank_final_data.loc[i] = rank_averages_final_copy
         rank_stable_data.loc[i] = rank_averages_stable_copy
-        delta_info.loc[i] = [delta_percentage_copy,factor_scale_copy,last_operation_copy]
-        delta_info_kernel.loc[i] = [delta_percentage_kernel_copy,factor_scale_kernel_copy,last_operation_kernel_copy]
-        print('~~~Starting Conv Adjustments~~~')
-        new_network=update_network(new_channel_sizes,new_kernel_sizes)
 
-        if zero_value==True:
-            GLOBALS.CONFIG['adapt_trials']=i
-            break
+        print('~~~Starting Conv parameter_typements~~~')
+        new_network=update_network(new_channel_sizes,new_kernel_sizes)
 
         print('~~~Initializing the new model~~~')
         parser = ArgumentParser(description=__doc__)
         args(parser)
         args_true = parser.parse_args()
-        #trial=0: min=3, trial=i=1, min=3, trial=i=2, min=3, '''trial=i=3''', min=3 FOR ALTERNATIVE trial=i
         train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,new_threshold=new_threshold)
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
         print('~~~Training with new model~~~')
-        run_epochs(i, epochs, train_loader, test_loader,
-                               device, optimizer, scheduler, output_path_train)
+        run_epochs(i, epochs, train_loader, test_loader,device, optimizer, scheduler, output_path_train)
 
     return kernel_data,conv_data,rank_final_data,rank_stable_data,new_channel_sizes,new_kernel_sizes,delta_info, delta_info_kernel
 
 def create_trial_data_file(kernel_data,conv_data,delta_info_kernel,delta_info,rank_final_data,rank_stable_data,output_path_string_trials,output_path_string_graph_files,output_path_string_modelweights):
     #parameter_data.to_excel(output_path_string_trials+'\\'+'adapted_parameters.xlsx')
-    delta_info_kernel.to_excel(output_path_string_trials+'\\'+'adapted_delta_info_kernel.xlsx')
-    delta_info.to_excel(output_path_string_trials+'\\'+'adapted_delta_info.xlsx')
-    kernel_data.to_excel(output_path_string_trials+'\\'+'adapted_kernels.xlsx')
-    conv_data.to_excel(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
-    rank_final_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_final.xlsx')
-    rank_stable_data.to_excel(output_path_string_trials+'\\'+'adapted_rank_stable.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+'\\'+'adapted_kernels.xlsx',output_path_string_trials+'\\'+'adapted_architectures.xlsx',output_path_string_trials+'\\'+'adapted_rank_final.xlsx',output_path_string_trials+'\\'+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    delta_info_kernel.to_excel(output_path_string_trials+slash+'adapted_delta_info_kernel.xlsx')
+    delta_info.to_excel(output_path_string_trials+slash+'adapted_delta_info.xlsx')
+    kernel_data.to_excel(output_path_string_trials+slash+'adapted_kernels.xlsx')
+    conv_data.to_excel(output_path_string_trials+slash+'adapted_architectures.xlsx')
+    rank_final_data.to_excel(output_path_string_trials+slash+'adapted_rank_final.xlsx')
+    rank_stable_data.to_excel(output_path_string_trials+slash+'adapted_rank_stable.xlsx')
+    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+slash+'adapted_kernels.xlsx',output_path_string_trials+slash+'adapted_architectures.xlsx',output_path_string_trials+slash+'adapted_rank_final.xlsx',output_path_string_trials+slash+'adapted_rank_stable.xlsx',output_path_string_graph_files)
     #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
@@ -458,23 +494,28 @@ def get_output_sizes(file_name):
 
 def run_epochs(trial, epochs, train_loader, test_loader,
                device, optimizer, scheduler, output_path):
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    print('------------------------------' + slash)
     if GLOBALS.CONFIG['lr_scheduler'] == 'AdaS':
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"AdaS_adapt_trial={trial}_" +\
+                slash + f"AdaS_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"AdaS_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"AdaS_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"AdaS_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"beta={GLOBALS.CONFIG['beta']}_" +\
                     f"dataset=" +\
@@ -485,42 +526,46 @@ def run_epochs(trial, epochs, train_loader, test_loader,
     else:
         if GLOBALS.FULL_TRAIN == False:
             xlsx_name = \
-                f"StepLR_adapt_trial={trial}_" +\
+                slash + f"StepLR_adapt_trial={trial}_" +\
                 f"net={GLOBALS.CONFIG['network']}_" +\
                 f"{GLOBALS.CONFIG['init_lr']}_dataset=" +\
                 f"{GLOBALS.CONFIG['dataset']}.xlsx"
         else:
             if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
                 xlsx_name = \
-                    f"StepLR_last_iter_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_last_iter_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
                 xlsx_name = \
-                    f"StepLR_fresh_fulltrain_trial={trial}_" +\
+                    slash + f"StepLR_fresh_fulltrain_trial={trial}_" +\
                     f"net={GLOBALS.CONFIG['network']}_" +\
                     f"dataset=" +\
                     f"{GLOBALS.CONFIG['dataset']}.xlsx"
             else:
                 print('ERROR: INVALID FULL_TRAIN_MODE | Check that the correct full_train_mode strings have been initialized in main file | Should be either fresh, or last_trial')
                 sys.exit()
-    xlsx_path = str(output_path) +'\\'+ xlsx_name
+    if platform.system == 'Windows':
+        slash = '\\'
+    else:
+        slash = '/'
+    xlsx_path = str(output_path) +slash+ xlsx_name
 
     if GLOBALS.FULL_TRAIN == False:
         filename = \
-            f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
+            slash + f"stats_net={GLOBALS.CONFIG['network']}_AdaS_trial={trial}_" +\
             f"beta={GLOBALS.CONFIG['beta']}_initlr={GLOBALS.CONFIG['init_lr']}_" +\
             f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     else:
         if GLOBALS.FULL_TRAIN_MODE == 'last_trial':
             filename = \
-                f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_last_iter_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
         elif GLOBALS.FULL_TRAIN_MODE == 'fresh':
             filename = \
-                f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
+                slash + f"stats_fresh_net={GLOBALS.CONFIG['network']}_StepLR_trial={trial}_" +\
                 f"beta={GLOBALS.CONFIG['beta']}_" +\
                 f"dataset={GLOBALS.CONFIG['dataset']}.csv"
     Profiler.filename = output_path / filename
@@ -539,7 +584,7 @@ def run_epochs(trial, epochs, train_loader, test_loader,
             scheduler.step()
         total_time = time.time()
         print(
-            f"AdaS: Trial {trial}/{GLOBALS.CONFIG['n_trials'] - 1} | " +
+            f"AdaS: Trial {trial}/{GLOBALS.total_trials - 1} | " +
             f"Epoch {epoch}/{epochs[-1]} Ended | " +
             "Total Time: {:.3f}s | ".format(total_time - start_time) +
             "Epoch Time: {:.3f}s | ".format(end_time - start_time) +

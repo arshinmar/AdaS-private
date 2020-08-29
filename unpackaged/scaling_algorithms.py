@@ -3,21 +3,9 @@ import copy
 import pandas as pd
 import numpy as np
 import global_vars as GLOBALS
-from profiler import Profiler
-from AdaS import AdaS
-from test import test_main
-from optim.sls import SLS
-from optim.sps import SPS
-from optim import get_optimizer_scheduler
-from early_stop import EarlyStop
-import sys
-from ptflops import get_model_complexity_info
 from models.own_network import DASNet34,DASNet50
-import copy
-import torch
-import torch.backends.cudnn as cudnn
 from adaptive_graph import adaptive_stop, slope
-import math
+
 def even_round(number):
     return int(round(number/2)*2)
 
@@ -66,10 +54,36 @@ def convert_format(full_list, temp_shortcut_indexes):
         #print(final,'final in covert_format loop')
     return final
 
-def nearest_upper_odd(squared_kernel_size):
-    return np.ceil(math.sqrt(squared_kernel_size)) // 2 * 2 + 1
+def retrieve_layer_ranks(conv_size_list,shortcut_indexes,superblock,layer):
+    epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
+    yaxis=[]
+    yaxis_kernel=[]
+    for k in range(GLOBALS.CONFIG['epochs_per_trial']):
+        input_ranks,output_ranks=get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
+        if GLOBALS.CONFIG['kernel_adapt'] == 1:
+            kernel_ranks_flat = get_info_singular('mode12_rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
+            kernel_ranks = convert_format(kernel_ranks_flat,shortcut_indexes)
+            kernel_ranks[0] = [kernel_ranks_flat[0]]+kernel_ranks[0]
+            yaxis_kernel+=[kernel_ranks[superblock][layer]]
+        rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
+        yaxis+=[rank_averages[superblock][layer]]
+    return epoch_num,yaxis,yaxis_kernel
 
-def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operation,factor_scale,delta_percentage,last_operation_kernel,factor_scale_kernel,delta_percentage_kernel):
+def adjust_gray_values(new_channel_sizes,increment,gray_values):
+    gray_averages=[]
+    for superblock in range(len(gray_values)):
+        gray_averages+=[even_round(np.average(gray_values[superblock]))]
+
+    for superblock in range(len(new_channel_sizes)):
+        if superblock==0:
+            starter=0
+        else:
+            starter=1
+        for layer in range(starter,len(new_channel_sizes[superblock]),increment):
+            new_channel_sizes[superblock][layer]=gray_averages[superblock]
+    return new_channel_sizes,gray_averages
+
+def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operation,factor_scale,delta_percentage,last_operation_kernel,factor_scale_kernel,delta_percentage_kernel,parameter_type='channel'):
     #print('GLOBALS EXCEL PATH IN DELTA_SCALING FUNCTION:{}'.format(GLOBALS.EXCEL_PATH))
     print('*****MIN KERNEL SIZE USED IN DELTA SCALING: {}'.format(GLOBALS.CONFIG['min_kernel_size']))
 
@@ -100,14 +114,13 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
     elif GLOBALS.BLOCK_TYPE=='Bottleneck':
         increment=3
 
+    #Initialize Parameters
+    FIRST_TIME=False
+    slope_averages=[]
     gray_values=[]
     gray_averages=[]
     for i in conv_size_list:
         gray_values+=[[]]
-
-    FIRST_TIME=False
-
-    slope_averages=[]
     if last_operation==[]:
         FIRST_TIME = True
         for i in conv_size_list:
@@ -119,12 +132,13 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
             last_operation_kernel.append([-1]*len(i))
             delta_percentage_kernel.append([0]*len(i))
 
-
+    #ITERATE THROUGH LAYERS
     for superblock in range(len(new_channel_sizes)):
         for layer in range(0,len(new_channel_sizes[superblock])):
             channel_stop = False
             kernel_stop = False
 
+            #CHANGE MIN KERNEL SIZE HALF WAY TO SECOND MIN
             if (GLOBALS.CONFIG['min_kernel_size']==GLOBALS.CONFIG['min_kernel_size_2'] and kernel_size_list[superblock][layer]==GLOBALS.min_kernel_size_1):
                 last_operation_kernel[superblock][layer]=-2
 
@@ -136,87 +150,57 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
                 kernel_stop = True
                 current_operation_kernel=STOP
 
-            #CODE FOR CALCULATING THE RANK AVERAGE SLOPES
-            epoch_num=[i for i in range(GLOBALS.CONFIG['epochs_per_trial'])]
-            yaxis=[]
-            yaxis_kernel=[]
-            for k in range(GLOBALS.CONFIG['epochs_per_trial']):
-                input_ranks,output_ranks=get_info('rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
-                kernel_ranks_flat = get_info_singular('mode12_rank',path=GLOBALS.EXCEL_PATH,epoch_number=k)
-                kernel_ranks = convert_format(kernel_ranks_flat,shortcut_indexes)
-                kernel_ranks[0] = [kernel_ranks_flat[0]]+kernel_ranks[0]
-
-                rank_averages=calculate_correct_output_sizes(input_ranks, output_ranks, conv_size_list, shortcut_indexes, 0.1,final=False)[1]
-
-                yaxis+=[rank_averages[superblock][layer]]
-                yaxis_kernel+=[kernel_ranks[superblock][layer]]
-
-            break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
-            break_point_kernel = adaptive_stop(epoch_num,yaxis_kernel,0.005,4)
-            delta_percentage[superblock][layer] = slope(yaxis,break_point)
-            delta_percentage_kernel[superblock][layer] = slope(yaxis_kernel,break_point_kernel)
-
-            '-----------------------------------------------DECIDE OPERATIONS--------------------------------------------------------------------------------'
-            #CHANNEL SIZE OPERATION
-            if (channel_stop==False):
-                current_operation=EXPAND
-                if (((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size'])) or (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
-                    current_operation = SHRINK
-                #if (current_operation == EXPAND) and (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
-                #    current_operation = STOP
-
-            #KERNEL SIZE OPERATION
-            if (kernel_stop==False):
-                current_operation_kernel=EXPAND
-                if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])) or (kernel_size_list[superblock][layer]>=GLOBALS.CONFIG['max_kernel_size']):
-                    current_operation_kernel = SHRINK
-                #if (current_operation_kernel == EXPAND) and (kernel_size_list[superblock][layer]==GLOBALS.CONFIG['max_kernel_size']):
-                #    current_operation_kernel = STOP
-            '-----------------------------------------------ADJUST FACTOR SCALE-------------------------------------------------------------------------------'
-            #CHANNEL SIZE FACTOR
-            if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
-                factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
-
-            #KERNEL SIZE FACTOR
-            if (last_operation_kernel[superblock][layer] != current_operation_kernel and FIRST_TIME==False):
-                factor_scale_kernel[superblock][layer] = factor_scale_kernel[superblock][layer]/2
-            '--------------------------------------------------CHECK FOR STOP -------------------------------------------------------------------------'
-            #CHANNEL SIZE STOP
-            if (factor_scale[superblock][layer] < min_scale_limit):
-                current_operation = STOP
-
-            #KERNEL SIZE STOP
-            #if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/16) or (kernel_size_list[superblock][layer] == GLOBALS.CONFIG['min_kernel_size']): #If the operation has alternated 4 times
-            if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/32): #If the operation has alternated 3 times
-                current_operation_kernel = STOP
-            '----------------------------------------------------------------------------------------------------------------------------------------'
-            last_operation[superblock][layer] = current_operation
-            last_operation_kernel[superblock][layer] = current_operation_kernel
-
-            new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
-
-            if GLOBALS.CONFIG['kernel_adapt']==1:
-                new_kernel_sizes[superblock][layer] = int(kernel_size_list[superblock][layer] + (last_operation_kernel[superblock][layer]*2))
-            else:
+            epoch_num,yaxis,yaxis_kernel=retrieve_layer_ranks(conv_size_list,shortcut_indexes,superblock,layer)
+            '-----------------------------------------------CHANNEL ADAPT--------------------------------------------------------------------------------'
+            if (parameter_type=='channel' or parameter_type=='both'):
+                break_point = adaptive_stop(epoch_num,yaxis,0.005,4)
+                delta_percentage[superblock][layer] = slope(yaxis,break_point)
+                #CHANNEL SIZE OPERATION
+                if (channel_stop==False):
+                    current_operation=EXPAND
+                    if (((delta_percentage[superblock][layer]<delta_threshold) or (mapping_conditions[superblock][layer] >= mapping_threshold)) and (conv_size_list[superblock][layer] > GLOBALS.CONFIG['min_conv_size'])) or (conv_size_list[superblock][layer]>=GLOBALS.CONFIG['max_conv_size']):
+                        current_operation = SHRINK
+                #CHANNEL SIZE FACTOR
+                if (last_operation[superblock][layer] != current_operation and FIRST_TIME==False):
+                    factor_scale[superblock][layer] = factor_scale[superblock][layer]/2
+                #CHANNEL SIZE STOP
+                if (factor_scale[superblock][layer] < min_scale_limit):
+                    current_operation = STOP
+                #ASSIGN LAST OPERATION CHANNEL
+                last_operation[superblock][layer] = current_operation
+                #CALCULATE NEW SIZES
+                new_channel_sizes[superblock][layer] = even_round(conv_size_list[superblock][layer] * (1 + factor_scale[superblock][layer]*last_operation[superblock][layer]))
                 new_kernel_sizes[superblock][layer] = kernel_size_list[superblock][layer]
-
+            '-----------------------------------------------KERNEL ADAPT--------------------------------------------------------------------------------'
+            if (GLOBALS.CONFIG['kernel_adapt'] == 1 and (parameter_type=='kernel' or parameter_type=='both')):
+                break_point_kernel = adaptive_stop(epoch_num,yaxis_kernel,0.005,4)
+                delta_percentage_kernel[superblock][layer] = slope(yaxis_kernel,break_point_kernel)
+                #KERNEL SIZE OPERATION
+                if (kernel_stop==False):
+                    current_operation_kernel=EXPAND
+                    if ((delta_percentage_kernel[superblock][layer] < delta_threshold_kernel) and (kernel_size_list[superblock][layer] > GLOBALS.CONFIG['min_kernel_size'])) or (kernel_size_list[superblock][layer]>=GLOBALS.CONFIG['max_kernel_size']):
+                        current_operation_kernel = SHRINK
+                #KERNEL SIZE FACTOR
+                if (last_operation_kernel[superblock][layer] != current_operation_kernel and FIRST_TIME==False):
+                    factor_scale_kernel[superblock][layer] = factor_scale_kernel[superblock][layer]/2
+                #KERNEL SIZE STOP
+                if (factor_scale_kernel[superblock][layer] <= GLOBALS.CONFIG['factor_scale_kernel']/32): #If the operation has alternated 3 times
+                    current_operation_kernel = STOP
+                #ASSIGN LAST OPERATION KERNEL
+                last_operation_kernel[superblock][layer] = current_operation_kernel
+                #CALCULATE NEW SIZES
+                new_kernel_sizes[superblock][layer] = int(kernel_size_list[superblock][layer] + (last_operation_kernel[superblock][layer]*2))
+                new_channel_sizes[superblock][layer] = conv_size_list[superblock][layer]
+            '-----------------------------------------------STORE CORRECT GRAY VALUES--------------------------------------------------------------------------------'
             if (superblock==0):
                 if layer%increment==0:
                     gray_values[superblock]+=[new_channel_sizes[superblock][layer]]
             else:
                 if (layer-1)%increment==0:
                     gray_values[superblock]+=[new_channel_sizes[superblock][layer]]
+            '----------------------------------------------------------------------------------------------------------------------------------------'
 
-    for superblock in range(len(gray_values)):
-        gray_averages+=[even_round(np.average(gray_values[superblock]))]
-
-    for superblock in range(len(new_channel_sizes)):
-        if superblock==0:
-            starter=0
-        else:
-            starter=1
-        for layer in range(starter,len(new_channel_sizes[superblock]),increment):
-            new_channel_sizes[superblock][layer]=gray_averages[superblock]
+    new_channel_sizes,gray_averages=adjust_gray_values(new_channel_sizes,increment,gray_values)
 
     print('------------------------------------------------------------------------------------------------')
     print(gray_values, 'GRAY VALUES')
@@ -226,11 +210,10 @@ def delta_scaling(conv_size_list,kernel_size_list,shortcut_indexes,last_operatio
     print(conv_size_list, 'OLD CONV SIZE LIST')
     print(new_channel_sizes,'NEW CONV SIZE LIST')
     print('------------------------------------------------------------------------------------------------')
-    if GLOBALS.CONFIG['kernel_adapt']==1:
-        print(factor_scale_kernel,'FACTOR SCALE KERNEL')
-        print(kernel_size_list, 'OLD KERNEL SIZE LIST')
-        print(new_kernel_sizes,'NEW KERNEL SIZE LIST')
-        print('------------------------------------------------------------------------------------------------')
+    print(factor_scale_kernel,'FACTOR SCALE KERNEL')
+    print(kernel_size_list, 'OLD KERNEL SIZE LIST')
+    print(new_kernel_sizes,'NEW KERNEL SIZE LIST')
+    print('------------------------------------------------------------------------------------------------')
 
     return last_operation, last_operation_kernel, factor_scale, factor_scale_kernel, new_channel_sizes,new_kernel_sizes, delta_percentage, delta_percentage_kernel, rank_averages_final, rank_averages_stable
 
