@@ -64,8 +64,8 @@ if __name__ == '__main__':
             print('Done Trials.')
         else:
             try:
-                #print(int('booger'))
-                output_sizes=get_output_sizes(output_path_string_trials+slash+'adapted_architectures.xlsx')
+                output_sizes=get_output_sizes(output_path_string_trials+'\\'+'adapted_architectures.xlsx')
+                kernel_sizes=get_output_sizes(output_path_string_trials+'\\'+'adapted_kernels.xlsx')
             except:
                 output_sizes=[[32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32],[32,32,32,32,32,32,32,32,32,32,32,32],[32,32,32,32,32,32]] #WHATEVER WE WANT.
 
