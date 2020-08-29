@@ -315,7 +315,7 @@ def create_graphs(trial_info_file_name,adapted_kernel_file_name,adapted_conv_fil
         slash = '\\'
     else:
         slash = '/'
-    create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.CONFIG['adapt_trials'],out_folder)
+    create_adaptive_graphs(trial_info_file_name,GLOBALS.CONFIG['epochs_per_trial'],GLOBALS.total_trials,out_folder)
     kernel_path=out_folder+slash+'dynamic_kernel_Size_Plot.png'
     conv_path=out_folder+slash+'dynamic_layer_Size_Plot.png'
     rank_final_path=out_folder+slash+'dynamic_rank_final.png'
@@ -406,9 +406,8 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
                 print('ACTIVATED IF STATEMENT 1 FOR SOME STUPID REASON')
                 break_loop=True
 
-        if all_kernels_stopped==True or i==kernel_begin_trial+GLOBALS.CONFIG['adapt_trials_kernel']:# and kernel_begin_trial!=0:
+        if (all_kernels_stopped==True or i==kernel_begin_trial+GLOBALS.CONFIG['adapt_trials_kernel']) and kernel_begin_trial!=0:# and kernel_begin_trial!=0:
             print('ACTIVATED IF STATEMENT 2 FOR SOME EVEN STUPIDER REASON')
-            GLOBALS.total_trials=i
             break_loop=True
         return kernel_begin_trial,parameter_type,break_loop
 
@@ -436,7 +435,9 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         all_channels_stopped, all_kernels_stopped = check_last_operation(last_operation,last_operation_kernel,kernel_begin_trial)
         print(all_channels_stopped,all_kernels_stopped, 'BREAK VALUES!')
         kernel_begin_trial,parameter_type,break_loop = should_break(i,all_channels_stopped,all_kernels_stopped,kernel_begin_trial,parameter_type)
-        if break_loop==True: break
+        if break_loop==True:
+            GLOBALS.TOTAL_trials=i
+            break
 
         last_operation_copy, factor_scale_copy, delta_percentage_copy, rank_averages_final_copy, rank_averages_stable_copy = copy.deepcopy(last_operation),copy.deepcopy(factor_scale),copy.deepcopy(delta_percentage),copy.deepcopy(rank_averages_final),copy.deepcopy(rank_averages_stable)
         last_operation_kernel_copy, factor_scale_kernel_copy, delta_percentage_kernel_copy = copy.deepcopy(last_operation_kernel), copy.deepcopy(factor_scale_kernel), copy.deepcopy(delta_percentage_kernel)
