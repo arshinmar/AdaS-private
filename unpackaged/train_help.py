@@ -436,7 +436,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         print(all_channels_stopped,all_kernels_stopped, 'BREAK VALUES!')
         kernel_begin_trial,parameter_type,break_loop = should_break(i,all_channels_stopped,all_kernels_stopped,kernel_begin_trial,parameter_type)
         if break_loop==True:
-            GLOBALS.TOTAL_trials=i
+            GLOBALS.total_trials=i
             break
 
         last_operation_copy, factor_scale_copy, delta_percentage_copy, rank_averages_final_copy, rank_averages_stable_copy = copy.deepcopy(last_operation),copy.deepcopy(factor_scale),copy.deepcopy(delta_percentage),copy.deepcopy(rank_averages_final),copy.deepcopy(rank_averages_stable)
