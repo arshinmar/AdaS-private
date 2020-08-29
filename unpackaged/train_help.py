@@ -481,7 +481,11 @@ def create_trial_data_file(kernel_data,conv_data,delta_info_kernel,delta_info,ra
     conv_data.to_excel(output_path_string_trials+slash+'adapted_architectures.xlsx')
     rank_final_data.to_excel(output_path_string_trials+slash+'adapted_rank_final.xlsx')
     rank_stable_data.to_excel(output_path_string_trials+slash+'adapted_rank_stable.xlsx')
-    create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+slash+'adapted_kernels.xlsx',output_path_string_trials+slash+'adapted_architectures.xlsx',output_path_string_trials+slash+'adapted_rank_final.xlsx',output_path_string_trials+slash+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    try:
+        create_graphs(GLOBALS.EXCEL_PATH,output_path_string_trials+slash+'adapted_kernels.xlsx',output_path_string_trials+slash+'adapted_architectures.xlsx',output_path_string_trials+slash+'adapted_rank_final.xlsx',output_path_string_trials+slash+'adapted_rank_stable.xlsx',output_path_string_graph_files)
+    except Exception as ex:
+        print('COULD NOT CREATE GRAPHS')
+        print(ex)
     #torch.save(GLOBALS.NET.state_dict(), output_path_string_modelweights+'\\'+'model_state_dict')
 
 def get_output_sizes(file_name):
