@@ -275,7 +275,7 @@ def create_full_data_file(new_network,full_save_file,full_fresh_file,output_path
     if platform.system() == 'Windows':
         parameter_data.to_excel(output_path_string_full_train+'\\'+'adapted_parameters.xlsx')
     else:
-         parameter_data.to_excel(output_path_string_full_train+'/'+'adapted_parameters.xlsx')
+        parameter_data.to_excel(output_path_string_full_train+'/'+'adapted_parameters.xlsx')
 
     return True
 
@@ -461,7 +461,7 @@ def run_trials(train_loader,test_loader,device,optimizer,scheduler,epochs,output
         parser = ArgumentParser(description=__doc__)
         args(parser)
         args_true = parser.parse_args()
-        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,new_threshold=new_threshold)
+        train_loader,test_loader,device,optimizer,scheduler,output_path,starting_conv_sizes = initialize(args_true,new_network,new_threshold_kernel=new_threshold)
         epochs = range(0, GLOBALS.CONFIG['epochs_per_trial'])
 
         print('~~~Training with new model~~~')
