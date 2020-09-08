@@ -17,12 +17,11 @@ adapt_trials_kernel: 10
 epochs_per_trial: 20
 
 mapping_condition_threshold: 10
-delta_threshold_kernel: 0.01
+delta_threshold_kernel: 0.12
 delta_threshold: 0.01
 delta_threshold_values:
   - 0.01
 delta_threshold_kernel_values:
-  - 0.01
   - 0.12
 kernel_adapt: 1 #0 for NO kernel adaptations, 1 for kernel adaptions
 parameter_type: 'channel' #'both' for simultaneously searching kernel and conv, else 'channel' for consecutive channel/kernel search
